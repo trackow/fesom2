@@ -1221,6 +1221,9 @@ FUNCTION bc_surface(n, id)
     CASE (101) ! apply boundary conditions to tracer ID=101
     bc_surface= dt*(prec_rain(n))! - real_salt_flux(n)*is_nonlinfs)
 
+    CASE (14) ! apply boundary conditions to tracer ID=14 ('Delta' radiocarbon)
+    bc_surface= dt * 1 ! UNDER CONSTRUCTION
+
     CASE DEFAULT
       if (mype==0) then
          write (id_string, "(I3)") id
