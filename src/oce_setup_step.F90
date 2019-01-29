@@ -331,6 +331,15 @@ USE g_ic3d
             write (id_string, "(I3)") id
             write(*,*) 'initializing '//trim(i_string)//'th tracer with ID='//trim(id_string)
          end if
+       CASE (14)        ! initialize tracer ID=14 (fractionation-corrected 14C/12C ratio)
+         tr_arr(1:12,:,i)  = 0.95   ! Delta14C ~ 50 permil in surface water
+         tr_arr(13:25,:,i) = 0.90   ! Delta14C ~ -100 permil in the main thermocline
+         tr_arr(26:48,:,i) = 0.85   ! Delta14C ~ -150 permil in deep water
+         if (mype==0) then
+            write (i_string,  "(I3)") i
+            write (id_string, "(I3)") id
+            write(*,*) 'initializing '//trim(i_string)//'th tracer with ID='//trim(id_string)
+         end if
        CASE (3)
          if (mype==0) then
             write (i_string,  "(I3)") i
