@@ -9,7 +9,10 @@ subroutine solve_tracers_ale
 	use o_mesh
 	use g_comm_auto
 	use o_tracers
-	
+! include variables for bgc tracer simulations
+	use bgc_PARAM, only: decay14 ! decay constant of 14C
+	use g_config, only: dt       ! needed to calculate 14C decay
+
 	implicit none
 	integer :: tr_num
 	real(kind=WP) :: aux_tr(nl-1,myDim_nod2D+eDim_nod2D)
@@ -39,6 +42,9 @@ subroutine solve_tracers_ale
 		! relax to salt and temp climatology
 		call relax_to_clim(tr_num)
 		
+		! radioactive decay of 14C
+		tr_arr(:,:,14) = tr_arr(:,:,14) * exp(-decay14 * dt)
+
 		call exchange_nod(tr_arr(:,:,tr_num))
 	end do
 	
