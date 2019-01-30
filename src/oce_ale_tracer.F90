@@ -1222,7 +1222,7 @@ FUNCTION bc_surface(n, id)
     bc_surface= dt*(prec_rain(n))! - real_salt_flux(n)*is_nonlinfs)
 
     CASE (14) ! apply boundary conditions to tracer ID=14 ('Delta' radiocarbon)
-    bc_surface= dt * 1 ! UNDER CONSTRUCTION
+    bc_surface= dt * 3e-7 ! UNDER CONSTRUCTION (dummy value equivalent to a global-mean CO2 invasion flux of 20 mol / m**2 / a)
 
     CASE DEFAULT
       if (mype==0) then
