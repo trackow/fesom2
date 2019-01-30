@@ -338,12 +338,13 @@ END MODULE o_ARRAYS
 
 !==========================================================
 MODULE bgc_PARAM
-! Parameters for BGC / tracer expermiments. In the future
-! this module should be moved to bgc_modules.F90.
+! Parameters for BGC / tracer expermiments. In the future,
+! this module should be outsourced to bgc_modules.F90.
+integer, parameter       :: WP = 8        ! Working precision
 
 ! Decay constant of 14C (1 / s)
-real(kind=WP), parameter :: 3.8534e-12  ! if 1 a := 365.25 d
-!real(kind=WP), parameter :: 3.9096e-12  ! if 1 a: = 360.0 d
+real(kind=WP), parameter :: decay14 = 3.8534e-12  ! if 1 a := 365.25 d
+!real(kind=WP), parameter :: decay14 = 3.9096e-12  ! if 1 a: = 360.0 d
 
 END MODULE bgc_PARAM
 !==========================================================
