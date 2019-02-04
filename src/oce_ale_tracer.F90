@@ -43,7 +43,8 @@ subroutine solve_tracers_ale
 		call relax_to_clim(tr_num)
 		
 		! radioactive decay of 14C
-		tr_arr(:,:,14) = tr_arr(:,:,14) * exp(-decay14 * dt)
+!!		if (tracer_id(tr_num) == 14) tr_arr(:,:,tr_num) = tr_arr(:,:,tr_num) * exp(-decay14 * dt)
+		if (tracer_id(tr_num) == 14) tr_arr(:,:,tr_num) = tr_arr(:,:,tr_num) * (1. - decay14 * dt)
 
 		call exchange_nod(tr_arr(:,:,tr_num))
 	end do
@@ -64,7 +65,7 @@ subroutine adv_tracers_ale(tr_num)
 	use g_config
 	use o_PARAM, only: tracer_adv
 	use o_arrays
-	
+	use g_forcing_arrays  ! necessary in bcg simulations
 	implicit none
 	integer :: tr_num
 	
