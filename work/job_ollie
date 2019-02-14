@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=fesom2.0
+#SBATCH --job-name=fesom2_bgc
 #SBATCH -p mpp
 #SBATCH --ntasks=288
 #SBATCH --time=00:30:00
@@ -7,6 +7,12 @@
 #SBATCH -e slurm-err.out
 
 set -x
+
+module purge
+module load centoslibs
+module load intel.compiler
+module load intel.mpi
+module load netcdf/4.4.0_intel
 
 ulimit -s unlimited
 
@@ -20,7 +26,7 @@ cp -n ../config/namelist.oce     .
 cp -n ../config/namelist.ice     .
 
 date
-srun --mpi=pmi2 ./fesom.x > "fesom2.0.out"
+srun --mpi=pmi2 ./fesom.x > "fesom2_bgc.out"
 date
 
 #qstat -f $PBS_JOBID
