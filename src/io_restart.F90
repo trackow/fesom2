@@ -121,6 +121,10 @@ subroutine ini_ocean_io(year)
          trname='salt'
          longname='salinity'
          units='psu'
+       CASE(3)
+         trname='r14c'
+         longname='radiocarbon'
+         units='none'
        CASE DEFAULT
          write(trname,'(A3,i1)') 'tra_', j
          write(longname,'(A15,i1)') 'passive tracer ', j

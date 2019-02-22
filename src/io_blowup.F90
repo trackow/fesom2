@@ -123,6 +123,10 @@ MODULE io_BLOWUP
 				trname='salt'
 				longname='salinity'
 				units='psu'
+			CASE(3)
+				trname='r14c'
+				longname='radiocarbon'
+				units='none'
 			CASE DEFAULT
 				write(trname,'(A3,i1)') 'ptr', j
 				write(longname,'(A15,i1)') 'passive tracer ', j
