@@ -1203,6 +1203,8 @@ FUNCTION bc_surface(n, id)
   USE g_forcing_arrays
   USE g_PARSUP, only: mype, par_ex
   USE g_config
+  use bgc_PARAM, only: pCO2, r14_atm
+  use i_arrays, only: a_ice
   implicit none
 
   REAL(kind=WP)     :: bc_surface
@@ -1223,8 +1225,17 @@ FUNCTION bc_surface(n, id)
     bc_surface= dt*(prec_rain(n))! - real_salt_flux(n)*is_nonlinfs)
 
     CASE (14) ! apply boundary conditions to tracer ID=14 ('Delta' radiocarbon)
-    bc_surface= dt * 3e-7 ! UNDER CONSTRUCTION (dummy value equivalent to a global-mean CO2 invasion flux of 20 mol / m**2 / a)
-
+!   Approximate computation of 14CO2 fluxes following Wanninkhof (2014, equation 6),
+!   converting Wanninkhof's coefficient to obtain fluxes in m / s if DIC = 2 mol / m**3.
+    bc_surface= dt * 1.2e-11 * (u_wind(n)**2 + v_wind(n)**2) * pCO2 * (r14_atm - tr_arr(1,n,3)) * (1. - a_ice(n))
+!   print check values:
+    if (mype==0 .and. n==99) then
+       print *, 'Check values for 14CO2 exchange (my= 0, n = 99):'
+       print *, 'bc_surface =     ', bc_surface
+       print *, 'tr_arr  #3 =     ', tr_arr(1,n,3)
+       print *, 'u_wind, v_wind = ', u_wind(n), v_wind(n)
+       print *, 'a_ice =          ', a_ice(n)
+    endif
     CASE DEFAULT
       if (mype==0) then
          write (id_string, "(I3)") id
