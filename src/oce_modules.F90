@@ -346,5 +346,12 @@ integer, parameter       :: WP = 8        ! Working precision
 real(kind=WP), parameter :: decay14 = 3.8534e-12  ! if 1 a := 365.25 d
 !real(kind=WP), parameter :: decay14 = 3.9096e-12  ! if 1 a: = 360.0 d
 
+! normalized atmospheric 14CO2 / 12CO2 ratio
+real(kind=WP) :: r14_atm
+
+! atmospheric partial pressure of CO2 in atm
+real(kind=WP) :: pCO2 = 280e-6
+
+
 END MODULE bgc_PARAM
 !==========================================================
