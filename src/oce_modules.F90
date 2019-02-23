@@ -347,10 +347,14 @@ real(kind=WP), parameter :: decay14 = 3.8534e-12  ! if 1 a := 365.25 d
 !real(kind=WP), parameter :: decay14 = 3.9096e-12  ! if 1 a: = 360.0 d
 
 ! normalized atmospheric 14CO2 / 12CO2 ratio
-real(kind=WP) :: r14_atm
+real(kind=WP) :: r14c_a
 
 ! atmospheric partial pressure of CO2 in atm
-real(kind=WP) :: pCO2 = 280e-6
+real(kind=WP) :: pco2_a = 280e-6
+! CO2 exchange coefficient in s / m / atm (Wanninkhof, 2014, eq. (6)),
+! approximate value of 0.251 * solubility * normalized Schmidt number / DIC for
+! temperature = 0 deg C, S = 35, DIC = 2 mol / m**3, and converting to SI units
+real(kind=WP) :: co2xc = 1.2e-5
 
 
 END MODULE bgc_PARAM
