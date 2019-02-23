@@ -311,15 +311,6 @@ USE g_ic3d
   if (mype==0) write(*,*) num_tracers, ' tracers will be used in FESOM'
   if (mype==0) write(*,*) 'tracer IDs are: ', tracer_ID(1:num_tracers)
   !
-  ! read ocean state
-  ! this must be always done! First two tracers with IDs 0 and 1 are the temperature and salinity.
-  if(mype==0) write(*,*) 'read T/S climatology', trim(OceClimaDataName)
-  call do_ic3d
-  Tclim=tr_arr(:,:,1)
-  Sclim=tr_arr(:,:,2)
-  Tsurf=tr_arr(1,:,1)
-  Ssurf=tr_arr(1,:,2)
-  relax2clim=0.0
 
   DO i=3, num_tracers
      id=tracer_ID(i)
@@ -357,5 +348,16 @@ USE g_ic3d
          stop
      END SELECT
   END DO    
+
+  ! read ocean state
+  ! this must be always done! First two tracers with IDs 0 and 1 are the temperature and salinity.
+  if(mype==0) write(*,*) 'read T/S climatology', trim(OceClimaDataName)
+  call do_ic3d
+  Tclim=tr_arr(:,:,1)
+  Sclim=tr_arr(:,:,2)
+  Tsurf=tr_arr(1,:,1)
+  Ssurf=tr_arr(1,:,2)
+  relax2clim=0.0
+
 end subroutine oce_initial_state
 !==========================================================================
