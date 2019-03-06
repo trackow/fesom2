@@ -1203,7 +1203,7 @@ FUNCTION bc_surface(n, id)
   USE g_forcing_arrays
   USE g_PARSUP, only: mype, par_ex
   USE g_config
-  use bgc_PARAM, only: co2xc, pco2_a, r14c_a
+  use bgc_tracer
   use i_arrays, only: a_ice
   implicit none
 
@@ -1225,17 +1225,23 @@ FUNCTION bc_surface(n, id)
     bc_surface= dt*(prec_rain(n))! - real_salt_flux(n)*is_nonlinfs)
 
     CASE (14) ! apply boundary conditions to tracer ID=14 ('Delta' radiocarbon)
-!   Approximate computation of 14CO2 fluxes following Wanninkhof (2014, equation 6)
-!   and assuming local air-sea flux equilibrium for CO2
-    bc_surface= dt * co2xc * (u_wind(n)**2 + v_wind(n)**2) * pco2_a * (r14c_a - tr_arr(1,n,3)) * (1. - a_ice(n))
-!   print check values:
-    if (mype==0 .and. n==99) then
-       print *, 'Check values for 14CO2 exchange (my= 0, n = 99):'
-       print *, 'bc_surface =     ', bc_surface
-       print *, 'tr_arr  #3 =     ', tr_arr(1,n,3)
-       print *, 'u_wind, v_wind = ', u_wind(n), v_wind(n)
-       print *, 'a_ice =          ', a_ice(n)
-    endif
+      ! Computation of 14CO2 fluxes following Wanninkhof (2014, equation 5)
+      ! assuming local air-sea flux equilibrium for CO2 and DIC = 2.0 m / m**3.
+      ! 0.251 (cm / h) / (m / s)**2 by Wanninkhof (2014) -> 6.9722e-7 s / m
+      bc_surface= dt * 6.9722e-7 * solub_CO2(tr_arr(1,n,1), tr_arr(1,n,2)) * Sc_660(tr_arr(1,n,1))**(-0.5) * & 
+                  (u_wind(n)**2 + v_wind(n)**2) * partial_pressure(xCO2_a, Pair(n), tr_arr(1,n,1), tr_arr(1,n,2)) * & 
+                  (r14c_a - tr_arr(1,n,3)) * (1. - a_ice(n)) / DIC_0
+
+      !!  approximate computation of 14CO2 fluxes following Wanninkhof (2014, equation 6)
+      !!  and approximating pCO2 with xCO2_a
+      !!  bc_surface= dt * CO2xc * (u_wind(n)**2 + v_wind(n)**2) * 
+      !!              xCO2_a * (r14c_a - tr_arr(1,n,3)) * (1. - a_ice(n)) / DIC_0
+
+      !!  print check values:
+      !!  if (mype==0) then
+      !!     print *, 'Check values for 14CO2 exchange:'
+      !!
+      !!  endif
     CASE DEFAULT
       if (mype==0) then
          write (id_string, "(I3)") id
