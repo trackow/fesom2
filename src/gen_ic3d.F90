@@ -416,10 +416,6 @@ CONTAINS
          if (mype==0) write(*,*) "converting insitu temperature to potential..."
          call insitu2pot
       end if
-      
-!     convert Delta14C to normalized 14C/12C
-      if (mype==0) write(*,*) "Converting initial pseudo D14C to 14C/12C ..."
-      tr_arr(:,:,3) = 1 + 0.001 * tr_arr(:,:,3)
 
       if (mype==0) write(*,*) "DONE:  Initial conditions for tracers"
    
