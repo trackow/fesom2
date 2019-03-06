@@ -311,6 +311,15 @@ USE g_ic3d
   if (mype==0) write(*,*) num_tracers, ' tracers will be used in FESOM'
   if (mype==0) write(*,*) 'tracer IDs are: ', tracer_ID(1:num_tracers)
   !
+  ! read ocean state
+  ! this must be always done! First two tracers with IDs 0 and 1 are the temperature and salinity.
+  if(mype==0) write(*,*) 'read T/S climatology', trim(OceClimaDataName)
+  call do_ic3d
+  Tclim=tr_arr(:,:,1)
+  Sclim=tr_arr(:,:,2)
+  Tsurf=tr_arr(1,:,1)
+  Ssurf=tr_arr(1,:,2)
+  relax2clim=0.0
 
   DO i=3, num_tracers
      id=tracer_ID(i)
@@ -322,15 +331,8 @@ USE g_ic3d
             write (id_string, "(I3)") id
             write(*,*) 'initializing '//trim(i_string)//'th tracer with ID='//trim(id_string)
          end if
-       CASE (14)        ! initialize tracer ID=14 (fractionation-corrected 14C/12C ratio)
-         tr_arr(1:12,:,i)  = 0.95   ! Delta14C ~ 50 permil in surface water
-         tr_arr(13:25,:,i) = 0.90   ! Delta14C ~ -100 permil in the main thermocline
-         tr_arr(26:48,:,i) = 0.85   ! Delta14C ~ -150 permil in deep water
-         if (mype==0) then
-            write (i_string,  "(I3)") i
-            write (id_string, "(I3)") id
-            write(*,*) 'initializing '//trim(i_string)//'th tracer with ID='//trim(id_string)
-         end if
+       CASE (14)        ! initialize tracer ID=14, fractionation-corrected 14C/12C
+  !      this is just a dummy because 14C/12C is initialized calling do_ic3d
        CASE (3)
          if (mype==0) then
             write (i_string,  "(I3)") i
@@ -348,16 +350,6 @@ USE g_ic3d
          stop
      END SELECT
   END DO    
-
-  ! read ocean state
-  ! this must be always done! First two tracers with IDs 0 and 1 are the temperature and salinity.
-  if(mype==0) write(*,*) 'read T/S climatology', trim(OceClimaDataName)
-  call do_ic3d
-  Tclim=tr_arr(:,:,1)
-  Sclim=tr_arr(:,:,2)
-  Tsurf=tr_arr(1,:,1)
-  Ssurf=tr_arr(1,:,2)
-  relax2clim=0.0
 
 end subroutine oce_initial_state
 !==========================================================================
