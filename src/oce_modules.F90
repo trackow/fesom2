@@ -336,26 +336,98 @@ real(kind=WP),         allocatable    :: ice_rejected_salt(:)
 END MODULE o_ARRAYS
 !==========================================================
 
+
 !==========================================================
-MODULE bgc_PARAM
-! Parameters for BGC / tracer expermiments. In the future,
-! this module should be outsourced to bgc_modules.F90.
-integer, parameter       :: WP = 8        ! Working precision
-
-! Decay constant of 14C (1 / s)
-real(kind=WP), parameter :: decay14 = 3.8534e-12  ! if 1 a := 365.25 d
-!real(kind=WP), parameter :: decay14 = 3.9096e-12  ! if 1 a: = 360.0 d
-
-! normalized atmospheric 14CO2 / 12CO2 ratio
-real(kind=WP) :: r14c_a
-
-! atmospheric partial pressure of CO2 in atm
-real(kind=WP) :: pco2_a = 280e-6
-! CO2 exchange coefficient in s / m / atm (Wanninkhof, 2014, eq. (6)),
-! approximate value of 0.251 * solubility * normalized Schmidt number / DIC for
-! temperature = 0 deg C, S = 35, DIC = 2 mol / m**3, and converting to SI units
-real(kind=WP) :: co2xc = 1.2e-5
+MODULE bgc_tracer
+! Variables and functions for BGC / tracer expermiments.
 
 
-END MODULE bgc_PARAM
-!==========================================================
+  implicit none
+  save
+  
+  ! Decay constant of 14C (1 / s)
+  ! real(kind=8), parameter :: decay14 = 3.8534e-12  ! if 1 a := 365.25 d
+  real(kind=8), parameter :: decay14 = 3.8561e-12  ! if 1 a := 365.00 d
+  ! real(kind=WP), parameter :: decay14 = 3.9096e-12  ! if 1 a: = 360.0 d
+
+  ! normalized atmospheric 14CO2 / 12CO2 ratio
+  real(kind=8) :: r14c_a = 1.0
+
+  ! atmospheric CO2 concentration
+  ! CMIP6 & OMIP-BGC: xCO2_a = 284.32 ppm for 1700-1850 CE
+  ! PMIP4:            xCO2_a = 190.00 ppm for 21 kcal BP
+  real(kind=8) :: xCO2_a = 284.23e-6  ! mole fraction in dry air
+
+  ! Global-mean DIC concentration in the mixed layer
+  real(kind=8) :: DIC_0 = 2.0  ! mol / m**3
+
+  ! CO2 exchange coefficient in s / m / atm (Wanninkhof, 2014, eq. (6)),
+  ! approximate value of 0.251 * solubility * normalized Schmidt number / DIC for
+  ! temperature = 0 deg C and S = 35 converted to SI units
+  real(kind=8) :: CO2xc = 2.4e-5
+
+
+  contains
+
+  
+    function partial_pressure(x_gas, p_air, temp_c, sal)
+    ! convert the mole fraction of a gas to its partial pressure in marine air
+      implicit none
+    
+      real :: partial_pressure
+      real(kind=8), intent(in) :: x_gas, p_air, temp_c, sal
+      ! x_gas = mole fraction of the gas to be converted
+      ! p_air = total pressure in Pa
+      ! temp_c = temperature in deg C
+      ! sal = salinity in PSU or permil
+      real(kind=8) :: p_h2o, temp_k100
+      ! p_h2o = vapor pressure of sea water in atm
+      ! temp_k100 = temperature in K * 100
+
+      ! vapor pressure over seawater in atm (Weiss & Price 1980, eq. 10)
+      temp_k100 = (temp_c + 273.15) * 0.01
+      p_h2o = exp(24.4543 - 67.4509 / temp_k100 - 4.8489 * log(temp_k100) - 0.000544 * sal)
+
+      ! partial pressure in moist air, 1 atm = 1.01325 Pa
+      partial_pressure = x_gas  * (p_air / 1.01325e5 - p_h2o)
+
+      return 
+    end function partial_pressure
+
+
+    function solub_CO2(temp_c, sal)
+    ! solubility of CO2 in seawater in mol / (m**3 * atm)
+      implicit none
+      
+      real(kind=8) :: solub_CO2
+      real(kind=8), intent(in) :: temp_c, sal
+      ! temp_c = temperature in deg C
+      ! sal = salinity in PSU or permil
+      real(kind=8) :: temp_k100
+      
+      temp_k100 = (temp_c + 273.15) * 0.01
+
+      ! CO2 solubility according to Weiss, 1974 (eq. 12 and tab. I). We follow the OMPIC-BCG recommendations
+      ! for "abiotic" carbon tracers (Orr et al. 2017, eq. 17-18 and tab. 3) to use this solubility function
+      ! instead of the one by Weiss & Price (1985). Multiplication with 1000 converts from 1 / L  to 1 / m**3.
+
+      solub_CO2 = exp(-58.0931 + 90.5069 / temp_k100 + 22.2940 * log(temp_k100) + & 
+                      sal * (0.027766 - 0.025888* temp_k100 + 0.0050578 * temp_k100**2)) * 1000
+
+      return
+    end function solub_co2
+
+
+    function Sc_660(temp_c)
+    ! Schmidt number of CO2 in sea water with S = 35 (Wanninkhof 2014, tab. 1)
+    ! normalized to 20 degC (Sc ~ 660)
+      implicit none
+      real(kind=8) :: Sc_660
+      real(kind=8), intent(in) :: temp_c
+
+      Sc_660 = (2116.8 - 136.25 *temp_c + 4.7353 * temp_c**2 - 0.092307 * temp_c**3 + 0.0007555 * temp_c**4) / 660
+      return
+    end function Sc_660
+
+
+END MODULE bgc_tracer
