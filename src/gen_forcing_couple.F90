@@ -205,6 +205,8 @@ subroutine update_atm_forcing(istep)
   Tair     =atmdata(i_tair, :)-273.15
   prec_rain=atmdata(i_prec, :)/1000.
   prec_snow=atmdata(i_snow, :)/1000.
+  if (l_mslp) Pair=atmdata(i_mslp, :)
+  
   ! second, compute exchange coefficients
   ! 1) drag coefficient 
   if(AOMIP_drag_coeff) then
