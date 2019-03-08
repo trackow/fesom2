@@ -18,6 +18,7 @@ subroutine read_namelist
   use g_config
   use g_clock, only: timenew, daynew, yearnew
   use g_ic3d  
+  use bgc, only : bgc_param
   implicit none
 
   character(len=100)   :: nmlfile
@@ -94,6 +95,11 @@ subroutine read_namelist
   read (20,NML=ice_therm)
   close (20)
   endif
+
+  nmlfile ='namelist.bgc'    ! name of bgc tracers namelist file
+  open (20,file=nmlfile)
+  read (20,NML=bgc_param)
+  close (20)
 
   if(mype==0) write(*,*) 'Namelist files are read in'
 
