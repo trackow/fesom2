@@ -10,7 +10,7 @@ subroutine solve_tracers_ale
 	use g_comm_auto
 	use o_tracers
 ! include variables for bgc tracer simulations
-	use bgc_tracers, only: decay14 ! decay constant of 14C
+	use bgc, only: decay14 ! decay constant of 14C
 	use g_config, only: dt         ! needed to calculate 14C decay
 
 	implicit none
@@ -1203,7 +1203,7 @@ FUNCTION bc_surface(n, id)
   USE g_forcing_arrays
   USE g_PARSUP, only: mype, par_ex
   USE g_config
-  use bgc_tracers
+  use bgc
   use i_arrays, only: a_ice
   implicit none
 
@@ -1228,6 +1228,8 @@ FUNCTION bc_surface(n, id)
       ! flux_r14co2 is the local 14CO2 air-sea exchange flux (in m / s) for homogenous DIC in the mixed layer
       bc_surface = dt * flux_r14co2(tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
                                     Pair(n), xco2_a, r14c_a, tr_arr(1,n,3), dic_0)
+      ! print check values
+      ! if (mype==0) print *, $check_values
 
     CASE DEFAULT
       if (mype==0) then
