@@ -1,0 +1,8 @@
+! The namelist file for BGC tracers
+
+&bgc_param
+r14c_a = 1.00         ! fractionation-corrected atmospheric 14C/12C ratio
+xco2_a = 284.23e-6    ! mole fraction of atmospheric CO2 (LGM: 190.00e-6)
+dic_0  = 2.00         ! average DIC concentration (mol / m**3) in the mixed layer
+decay14 = !3.8561e-12 ! decay constant of 14C (1 / s) !3.8534e-12 for 365.25 d / a !3.9096e-12 for = 360.0 d / a
+/
