@@ -338,31 +338,31 @@ END MODULE o_ARRAYS
 
 
 !==========================================================
-MODULE bgc_tracers
-! Variables and functions for BGC / tracer expermiments.
+MODULE bgc
+! Parameters, variables and functions for BGC / tracer simulations.
 
   implicit none
   save
 
-  ! Decay constant of 14C (1 / s)
-  ! real(kind=8), parameter :: decay14 = 3.8534e-12  ! if 1 a := 365.25 d
-  real(kind=8), parameter :: decay14 = 3.8561e-12  ! if 1 a := 365.00 d
-  ! real(kind=WP), parameter :: decay14 = 3.9096e-12  ! if 1 a: = 360.0 d
-
   ! normalized atmospheric 14CO2 / 12CO2 ratio
   real(kind=8) :: r14c_a = 1.0
-
   ! atmospheric CO2 concentration
   ! CMIP6 & OMIP-BGC: xCO2_a = 284.32 ppm for 1700-1850 CE
   ! PMIP4:            xCO2_a = 190.00 ppm for 21 kcal BP
-  real(kind=8) :: xCO2_a = 284.23e-6  ! mole fraction in dry air
-
+  real(kind=8) :: xco2_a = 284.23e-6  ! mole fraction in dry air
   ! Global-mean DIC concentration in the mixed layer (mol / m**3)
-  real(kind=8) :: dic_0 = 2.0  ! GLODAPv2, 0-50 m: TCO2 ~ 2050 umol / kg
+  real(kind=8) :: dic_0 = 2.00        ! GLODAPv2, 0-50 m: TCO2 ~ 2050 umol / kg
+  ! Decay constant of 14C (1 / s), t1/2 = 5700 a following OMIP-BGC
+  ! real(kind=8), parameter :: decay14 = 3.8534e-12  ! if 1 a := 365.25 d
+  real(kind=8) :: decay14 = 3.8561e-12 ! if 1 a := 365.00 d
+  ! real(kind=WP), parameter :: decay14 = 3.9096e-12  ! if 1 a: = 360.0 d
+
+  ! Namelist to modify default parameter settings
+  namelist / bgc_param / r14c_a, xco2_a, dic_0, decay14
 
 
   contains
-    
+
 
     function flux_r14co2(temp_c, sal, u_10, v_10, f_ice, p_air, xco2_a, r14c_a,  r14c_w, dic_0)
     ! Calculate 14CO2 air-sea exchange fluxes in m / s, positive values mean oceanic 14C uptake.
@@ -398,7 +398,7 @@ MODULE bgc_tracers
     function partial_press(x_gas, p_air, temp_c, sal)
     ! Convert the mole fraction of a gas to its partial pressure in marine air.
       implicit none
-    
+
       real(kind=8) :: partial_press
       real(kind=8), intent(in) :: x_gas, p_air, temp_c, sal
       ! x_gas = mole fraction of the gas to be converted
@@ -455,4 +455,4 @@ MODULE bgc_tracers
     end function Sc_660
 
 
-END MODULE bgc_tracers
+END MODULE bgc
