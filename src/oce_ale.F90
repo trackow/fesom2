@@ -1942,12 +1942,14 @@ subroutine oce_timestep_ale(n)
     use io_RESTART !PS
     use i_ARRAYS !PS
     use o_mixing_KPP_mod
+    use bgc, only: online, offline
     
     IMPLICIT NONE
     real(kind=8)      :: t0,t1, t2, t30, t3, t4, t5, t6, t7, t8, t9, t10
     integer           :: n
     
     t0=MPI_Wtime()
+if (online) then
     !___________________________________________________________________________
     call pressure_bv               !!!!! HeRE change is made. It is linear EoS now.
     call pressure_force
@@ -2044,12 +2046,12 @@ subroutine oce_timestep_ale(n)
     ! is decided how change in hbar is distributed over the vertical layers
     call vert_vel_ale 
     t7=MPI_Wtime() 
-    
+end if ! online
     !___________________________________________________________________________
     ! solve tracer equation
     call solve_tracers_ale
     t8=MPI_Wtime() 
-    
+if (online) then
     !___________________________________________________________________________
     ! Update hnode=hnode_new, helem
     call update_thickness_ale  
@@ -2063,7 +2065,7 @@ subroutine oce_timestep_ale(n)
     ! togeather around 2.5% of model runtime
     call check_blowup(n)
     t10=MPI_Wtime()
-    
+end if ! online
     !___________________________________________________________________________
     ! write out execution times for ocean step parts
     rtime_oce          = rtime_oce + (t10-t0)-(t10-t9)
