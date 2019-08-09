@@ -21,6 +21,7 @@ use io_RESTART
 use io_MEANDATA
 use io_mesh_info
 use diagnostics
+use bgc, only: offline, online
 #if defined (__oasis)
 use cpl_driver
 #endif
@@ -87,6 +88,9 @@ real(kind=real32) :: runtime_alltimesteps
     call cpl_oasis3mct_define_unstr
     if(mype==0)  write(*,*) 'FESOM ---->     cpl_oasis3mct_define_unstr nsend, nrecv:',nsend, nrecv
 #endif
+    ! Log off-line simulation modes for BGC tracers
+    if (mype==0 .and. offline .and. (.not. online))  print *, '*** BGC: Tracers will be simulated off-line ***'
+    if (mype==0 .and. offline .and. online) print *, '*** BGC: Diagnosing dynamic fields for off-line simulations ***'
     
     call clock_newyear                        ! check if it is a new year
     if (mype==0) t6=MPI_Wtime()
@@ -162,9 +166,12 @@ real(kind=real32) :: runtime_alltimesteps
             seconds_til_now=INT(dt)*(n-1)
 #endif
         call clock
+if (online) then
         call compute_vel_nodes 
+end if ! online
         !___model sea-ice step__________________________________________________
         t1 = MPI_Wtime()
+if (online) then
         if(use_ice) then
             call ocean2ice
             call update_atm_forcing(n)
@@ -181,13 +188,16 @@ real(kind=real32) :: runtime_alltimesteps
             
             call oce_fluxes_mom ! momentum only
             call oce_fluxes
-        end if  
+        end if
+end if ! online
         t2 = MPI_Wtime()
         
         !___model ocean step____________________________________________________
         call oce_timestep_ale(n)
         t3 = MPI_Wtime()
+if (online) then
         call compute_diagnostics(1)
+end if ! online
         t4 = MPI_Wtime()
         !___prepare output______________________________________________________
         call output (n)

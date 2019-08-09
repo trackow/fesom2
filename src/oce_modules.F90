@@ -356,9 +356,15 @@ MODULE bgc
   ! real(kind=8), parameter :: decay14 = 3.8534e-12  ! if 1 a := 365.25 d
   real(kind=8) :: decay14 = 3.8561e-12 ! if 1 a := 365.00 d
   ! real(kind=WP), parameter :: decay14 = 3.9096e-12  ! if 1 a: = 360.0 d
+  ! Switches for off-line simulations
+  ! offline = .false., online = .true. : on-line simulations (default setup)
+  ! offline = .true., online = .true.  : diagnose dynamic fields to be used in off-line simulations
+  ! offline = .true., online = .false. : enable off-line simulations
+  logical :: offline = .false., online = .true.
+
 
   ! Namelist to modify default parameter settings
-  namelist / bgc_param / r14c_a, xco2_a, dic_0, decay14
+  namelist / bgc_param / r14c_a, xco2_a, dic_0, decay14, offline, online
 
 
   contains

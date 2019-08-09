@@ -6,6 +6,7 @@ MODULE io_RESTART
   use o_mesh
   use o_arrays
   use i_arrays
+  use bgc, only: offline
   implicit none
 #include "netcdf.inc"
 !
@@ -134,9 +135,19 @@ subroutine ini_ocean_io(year)
      longname=trim(longname)//', Adams–Bashforth'
      call def_variable(oid, trim(trname)//'_AB',(/nl-1, nod2D/), trim(longname), trim(units), tr_arr_old(:,:,j));
   end do
-  call def_variable(oid, 'w',      (/nl, nod2D/), 'vertical velocity', 'm/s', Wvel);
-  call def_variable(oid, 'w_expl', (/nl, nod2D/), 'vertical velocity', 'm/s', Wvel_e);
-  call def_variable(oid, 'w_impl', (/nl, nod2D/), 'vertical velocity', 'm/s', Wvel_i);
+  call def_variable(oid, 'w',      (/nl, nod2D/), 'vertical velocity', 'm/s', Wvel)
+  call def_variable(oid, 'w_expl', (/nl, nod2D/), 'vertical velocity', 'm/s', Wvel_e)
+  call def_variable(oid, 'w_impl', (/nl, nod2D/), 'vertical velocity', 'm/s', Wvel_i)
+if (offline) then
+  call def_variable(oid, 'Kv',     (/nl,    nod2D/), 'vertical diff.', 'm2/s',Kv)
+  call def_variable(oid, 'Ki',     (/nl-1,  nod2D/), 'hor. diff.',     'm2/s',Ki)
+  call def_variable(oid, 'fer_U',  (/nl-1, elem2D/), 'bolus U',        'm/s', fer_UV(1,:,:))
+  call def_variable(oid, 'fer_V',  (/nl-1, elem2D/), 'bolus V',        'm/s', fer_UV(2,:,:))
+  call def_variable(oid, 'fer_W',  (/nl,    nod2D/), 'bolus W',        'm/s', fer_wvel(:,:))
+  call def_variable(oid, 'slope_x',(/nl-1,  nod2D/), 'slope X',        'kg/m4', slope_tapered(1,:,:))
+  call def_variable(oid, 'slope_y',(/nl-1,  nod2D/), 'slope Y',        'kg/m4', slope_tapered(2,:,:))
+  call def_variable(oid, 'slope_z',(/nl-1,  nod2D/), 'slope Z',        'kg/m4', slope_tapered(3,:,:))
+end if ! offline
 end subroutine ini_ocean_io
 !
 !--------------------------------------------------------------------------------------------

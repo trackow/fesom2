@@ -12,6 +12,8 @@ module io_MEANDATA
   use diagnostics
   use i_PARAM, only: whichEVP
 
+  use bgc, only: offline, online
+
   use, intrinsic :: ISO_FORTRAN_ENV
 
   implicit none
@@ -103,7 +105,6 @@ subroutine ini_mean_io
     call def_stream((/nl-1, elem2D/), (/nl-1,   myDim_elem2D/), 'u',  'horizontal velocity', 'm/s', uv(1,:,:),     1, 'm', i_real4)
     call def_stream((/nl-1, elem2D/), (/nl-1,   myDim_elem2D/), 'v',  'meridional velocity', 'm/s', uv(2,:,:),     1, 'm', i_real4)
     call def_stream((/nl, nod2D/),    (/nl,     myDim_nod2D/),  'w',  'vertical velocity',   'm/s', Wvel(:,:),     1, 'm', i_real8)
-
     call def_stream(elem2D, myDim_elem2D,   'utau_surf',  '(u, tau) at the surface',      'N/(m s)', utau_surf(1:myDim_elem2D),     1, 'm', i_real4)
     call def_stream(elem2D, myDim_elem2D,   'utau_bott',  '(u, tau) at the bottom',       'N/(m s)', utau_bott(1:myDim_elem2D),     1, 'm', i_real4)
     call def_stream(elem2D, myDim_elem2D,   'u_bott',     'bottom velocity',                  'm/s', u_bott(1:myDim_elem2D),        1, 'm', i_real4)
@@ -125,12 +126,39 @@ subroutine ini_mean_io
 
   end if
 
+if (offline .and. online) then
+! prepare off-line simulations: add some (additional) diagnostic output fields (annual values, 64 bit)
+  call def_stream((/nl-1, nod2D/),  (/nl-1, myDim_nod2D/),  'temp', 'temperature',         'C',   tr_arr(:,:,1), 1, 'y', i_real8)
+  call def_stream((/nl-1, nod2D/),  (/nl-1, myDim_nod2D/),  'salt', 'salinity',            'psu', tr_arr(:,:,2), 1, 'y', i_real8)
+  do i=3, num_tracers
+     write (id_string, "(I3.3)") tracer_id(i)
+     call def_stream((/nl-1, nod2D/),  (/nl-1, myDim_nod2D/),  'tra_'//id_string, 'passive tracer ID='//id_string, 'n/a', tr_arr(:,:,i), 1, 'y', i_real8)
+  end do
+  call def_stream((/nl,   nod2D/),  (/nl,   myDim_nod2D/),  'Kv',   'Vertical mixing K',   'm2/s',Kv(:,:),       1, 'y', i_real8)
+  if (Redi) then 
+     call def_stream((/nl-1  , nod2D /), (/nl-1,   myDim_nod2D /), 'Redi_K',   'Redi diffusion coefficient', 'm2/s', Ki(:,:),    1, 'y', i_real8)
+  end if
+  call def_stream((/nl-1, elem2D/), (/nl-1, myDim_elem2D/), 'u',    'horizontal velocity', 'm/s', uv(1,:,:),     1, 'y', i_real8)
+  call def_stream((/nl-1, elem2D/), (/nl-1, myDim_elem2D/), 'v',    'meridional velocity', 'm/s', uv(2,:,:),     1, 'y', i_real8)
+  call def_stream((/nl, nod2D/),    (/nl,   myDim_nod2D/),  'w',    'vertical velocity',   'm/s', Wvel(:,:),     1, 'y', i_real8)
+  call def_stream((/nl, nod2D/),    (/nl,   myDim_nod2D/),  'w_expl', 'vertical velocity', 'm/s', Wvel_e(:,:),   1, 'y', i_real8)
+  call def_stream((/nl, nod2D/),    (/nl,   myDim_nod2D/),  'w_impl', 'vertical velocity', 'm/s', Wvel_i(:,:),   1, 'y', i_real8)
+  if (Fer_GM) then
+     call def_stream((/nl-1, elem2D/), (/nl-1, myDim_elem2D/), 'bolus_u', 'GM bolus velocity U',      'm/s',  fer_uv(1,:,:), 1, 'y', i_real8)
+     call def_stream((/nl-1, elem2D/), (/nl-1, myDim_elem2D/), 'bolus_v', 'GM bolus velocity V',      'm/s',  fer_uv(2,:,:), 1, 'y', i_real8)
+     call def_stream((/nl  , nod2D /), (/nl,   myDim_nod2D /), 'bolus_w', 'GM bolus velocity W',      'm/s',  fer_Wvel(:,:), 1, 'y', i_real8)
+  end if
+  call def_stream((/nl-1, nod2D/),  (/nl-1, myDim_nod2D/),  'slope_x','neutral slope X',   'none',slope_tapered(1,:,:), 1, 'y', i_real8)
+  call def_stream((/nl-1, nod2D/),  (/nl-1, myDim_nod2D/),  'slope_y','neutral slope Y',   'none',slope_tapered(2,:,:), 1, 'y', i_real8)
+  call def_stream((/nl-1, nod2D/),  (/nl-1, myDim_nod2D/),  'slope_z','neutral slope Z',   'none',slope_tapered(3,:,:), 1, 'y', i_real8)
+
+else
   call def_stream((/nl-1, nod2D/),  (/nl-1, myDim_nod2D/),  'temp', 'temperature',         'C',   tr_arr(:,:,1), 1, 'y', i_real4)
   call def_stream((/nl-1, nod2D/),  (/nl-1, myDim_nod2D/),  'salt', 'salinity',            'psu', tr_arr(:,:,2), 1, 'y', i_real4)
   
   do i=3, num_tracers
      write (id_string, "(I3.3)") tracer_id(i)
-     call def_stream((/nl-1, nod2D/),  (/nl-1, myDim_nod2D/),  'tra_'//id_string, 'pasive tracer ID='//id_string, 'n/a', tr_arr(:,:,i), 1, 'm', i_real4)
+     call def_stream((/nl-1, nod2D/),  (/nl-1, myDim_nod2D/),  'tra_'//id_string, 'passive tracer ID='//id_string, 'n/a', tr_arr(:,:,i), 1, 'm', i_real4)
   end do
 
   call def_stream((/nl-1, nod2D/),  (/nl-1, myDim_nod2D/),  'slope_x','neutral slope X',   'none',slope_tapered(1,:,:), 1, 'y', i_real4)
@@ -212,6 +240,9 @@ subroutine ini_mean_io
      call def_stream(elem2D, myDim_elem2D, 'alpha_EVP', 'alpha in EVP', 'n/a', alpha_evp_array,  1, 'd', i_real4)
      call def_stream(nod2D,  myDim_nod2D,  'beta_EVP',  'beta in EVP',  'n/a', beta_evp_array,   1, 'd', i_real4)
   end if
+
+end if ! BGC offline .and. online
+
 end subroutine ini_mean_io
 !
 !--------------------------------------------------------------------------------------------
