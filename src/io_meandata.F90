@@ -117,13 +117,14 @@ subroutine ini_mean_io
     call def_stream(elem2D, myDim_elem2D,   'ty_sur',     'meridional wind stress to ocean', 'm/s2', stress_surf(2, 1:myDim_elem2D),1, 'm', i_real4)
 
   else
+if (.not. offline) then
      call def_stream((/nl-1, elem2D/), (/nl-1, myDim_elem2D/), 'u',    'horizontal velocity', 'm/s', uv(1,:,:),     1, 'y', i_real4)
      call def_stream((/nl-1, elem2D/), (/nl-1, myDim_elem2D/), 'v',    'meridional velocity', 'm/s', uv(2,:,:),     1, 'y', i_real4)
      call def_stream((/nl, nod2D/),    (/nl,   myDim_nod2D/),  'w',    'vertical velocity',   'm/s', Wvel(:,:),     1, 'y', i_real4)
      call def_stream((/nl,   elem2D/), (/nl,   myDim_elem2D/), 'Av',   'Vertical mixing A',   'm2/s',Av(:,:),       1, 'y', i_real4)
      call def_stream(elem2D, myDim_elem2D,   'tx_sur',     'zonal wind stress to ocean',      'm/s2', stress_surf(1, 1:myDim_elem2D),1, 'm', i_real4)
      call def_stream(elem2D, myDim_elem2D,   'ty_sur',     'meridional wind stress to ocean', 'm/s2', stress_surf(2, 1:myDim_elem2D),1, 'm', i_real4)
-
+end if ! (.not. offline)
   end if
 
 if (offline .and. online) then

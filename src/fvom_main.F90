@@ -171,7 +171,7 @@ if (online) then
 end if ! online
         !___model sea-ice step__________________________________________________
         t1 = MPI_Wtime()
-if (online) then
+
         if(use_ice) then
             call ocean2ice
             call update_atm_forcing(n)
@@ -189,7 +189,6 @@ if (online) then
             call oce_fluxes_mom ! momentum only
             call oce_fluxes
         end if
-end if ! online
         t2 = MPI_Wtime()
         
         !___model ocean step____________________________________________________
@@ -209,7 +208,7 @@ end if ! online
         rtime_write_means   = rtime_write_means   + t5 - t4   
         rtime_write_restart = rtime_write_restart + t6 - t5
     end do
-    
+
     !___FINISH MODEL RUN________________________________________________________
 
     call MPI_Barrier(MPI_COMM_FESOM, MPIERR)

@@ -2050,8 +2050,8 @@ end if ! online
     !___________________________________________________________________________
     ! solve tracer equation
     call solve_tracers_ale
-    t8=MPI_Wtime() 
 if (online) then
+    t8=MPI_Wtime() 
     !___________________________________________________________________________
     ! Update hnode=hnode_new, helem
     call update_thickness_ale  
@@ -2066,6 +2066,20 @@ if (online) then
     call check_blowup(n)
     t10=MPI_Wtime()
 end if ! online
+
+if (.not. online) then
+   t1 = t0
+   t2 = t1
+   t30 = t2
+   t3 = t30
+   t4 = t3
+   t5 = t4
+   t6 = t5
+   t7 = t6
+   t8 = t7
+   t9 = t8
+   t10 = t9
+endif ! .not. online
     !___________________________________________________________________________
     ! write out execution times for ocean step parts
     rtime_oce          = rtime_oce + (t10-t0)-(t10-t9)
