@@ -18,7 +18,7 @@ subroutine read_namelist
   use g_config
   use g_clock, only: timenew, daynew, yearnew
   use g_ic3d  
-  use bgc, only : bgc_param
+  use bgc, only : bgc_param, r14c_a, xco2_a, xf12_a, transient
   implicit none
 
   character(len=100)   :: nmlfile
@@ -100,6 +100,7 @@ subroutine read_namelist
   open (20,file=nmlfile)
   read (20,NML=bgc_param)
   close (20)
+  if (transient .and. (mype==0)) print *, "r14c_a, xco2_a, xf12_a = ", r14c_a, xco2_a, xf12_a
 
   if(mype==0) write(*,*) 'Namelist files are read in'
 
