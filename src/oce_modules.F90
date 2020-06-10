@@ -344,12 +344,17 @@ MODULE bgc
   implicit none
   save
 
-  ! normalized atmospheric 14CO2 / 12CO2 ratio
-  real(kind=8) :: r14c_a = 1.0
-  ! atmospheric CO2 concentration
+  ! Normalized and fractionation-corrected atmospheric 14CO2 / 12CO2 ratios
+  real(kind=8) :: r14c_a  = 1.0, & ! Global average
+                  r14c_nh = 1.0, & ! Northern Hemisphere
+                  r14c_tz = 1.0, & ! Tropics
+                  r14c_sh = 1.0    ! Southern Hemisphere
+  ! Atmospheric CO2 concentration
   ! CMIP6 & OMIP-BGC: xCO2_a = 284.32 ppm for 1700-1850 CE
   ! PMIP4:            xCO2_a = 190.00 ppm for 21 kcal BP
   real(kind=8) :: xco2_a = 284.23e-6  ! mole fraction in dry air
+  ! Atmospheric CFC-12 concentration
+  real(kind=8) :: xf12_a = 0.00e-12   ! mole fraction in dry air
   ! Global-mean DIC concentration in the mixed layer (mol / m**3)
   real(kind=8) :: dic_0 = 2.00        ! GLODAPv2, 0-50 m: TCO2 ~ 2050 umol / kg
   ! Decay constant of 14C (1 / s), t1/2 = 5700 a following OMIP-BGC
@@ -357,14 +362,15 @@ MODULE bgc
   real(kind=8) :: decay14 = 3.8561e-12 ! if 1 a := 365.00 d
   ! real(kind=WP), parameter :: decay14 = 3.9096e-12  ! if 1 a: = 360.0 d
   ! Switches for off-line simulations
-  ! offline = .false., online = .true. : on-line simulations (default setup)
-  ! offline = .true., online = .true.  : diagnose dynamic fields to be used in off-line simulations
-  ! offline = .true., online = .false. : enable off-line simulations
-  logical :: offline = .false., online = .true.
-
-
+  logical ::  offline = .false., online = .true. ! on-line simulations (default setup)
+  ! logical :: offline = .true., online = .true.  ! diagnose dynamic fields to be used in off-line simulations
+  ! logical :: offline = .true., online = .false. ! enable off-line simulations
+  ! Switch for transient tracer forcing
+  logical :: transient = .false.                 ! transient tracer forcing
+  
   ! Namelist to modify default parameter settings
-  namelist / bgc_param / r14c_a, xco2_a, dic_0, decay14, offline, online
+  namelist / bgc_param / r14c_a, r14c_nh, r14c_tz, r14c_sh, xco2_a, xf12_a, dic_0, decay14, &
+                         offline, online, transient
 
 
   contains
