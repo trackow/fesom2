@@ -179,6 +179,8 @@ else
 !  call def_stream(elem2D, myDim_elem2D,  'v30',  'meridional velocity at 30m',       'm/s',    uv(2,5,1:myDim_elem2D),       1, 'm', i_real4)
 !DS
 
+  call def_stream(nod2D, myDim_nod2D, 'slp',   'sea level pressure', 'hP',     Pair,                          1, 'd', i_real4) !!MB TEST
+  call def_stream(nod2D, myDim_nod2D, 'temp2', '2 m air temperature', 'C',          Tair,                          1, 'd', i_real4) !!MB TEST
   call def_stream(nod2D, myDim_nod2D, 'sst',   'sea surface temperature', 'C',      tr_arr(1,1:myDim_nod2D,1),     1, 'm', i_real4)
   call def_stream(nod2D, myDim_nod2D, 'sss',   'sea surface salinity',    'psu',    tr_arr(1,1:myDim_nod2D,2),     1, 'm', i_real4)
   call def_stream(nod2D, myDim_nod2D, 'vve',   'vertical velocity',       'm/s',    Wvel(5,:),                     1, 'm', i_real4)
