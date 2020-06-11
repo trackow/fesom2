@@ -1,0 +1,70 @@
+#!/bin/bash
+#SBATCH --job-name=f2bgc_a3
+#SBATCH -p mpp
+#SBATCH --ntasks=288 #72
+#SBATCH --time=00:20:00
+#SBATCH -o slurm-out.out
+#SBATCH -e slurm-err.out
+
+set -x
+
+module purge
+module load centoslibs
+module load intel.compiler
+module load intel.mpi
+module load netcdf/4.4.0_intel
+module load cdo
+
+ulimit -s unlimited
+
+# determine JOBID
+JOBID=`echo $SLURM_JOB_ID |cut -d"." -f1`
+
+cp -v ../bin/fesom2_bgc.anthro3.x ./fesom.x
+cp -n ../config/namelist.config  .
+cp -n ../config/namelist.forcing .
+cp -n ../config/namelist.oce     .
+cp -n ../config/namelist.ice     .
+
+
+eval `head -n 25 ./namelist.config | tail -n 1`              # Path to the results => ResultPath
+core2_year1=`head -1 $ResultPath/fesom.clock | tail -c 5`    # Prior year of climate forcing
+core2_year2=`head -2 $ResultPath/fesom.clock | tail -c 5`    # Current year of climate forcing
+tracer_path=/work/ollie/mbutzin/fesom2/input/trace_gases/    # Path to transient tracer forcing
+tracer_year=`less $ResultPath/tracer.clock`                  # Calendar year of tracer forcing
+
+
+if [ "$tracer_year" -gt 2015 ]; then
+   echo "Exceeded the maximum number of repeat cycles. Terminate and exit."
+   scancel $SLURM_JOB_ID
+   exit 1
+else
+   cp -v $tracer_path/namelist.bgc.$tracer_year ./namelist.bgc
+fi
+
+# Repeated time stepping through the CORE-II climate forcing cycle
+if [ "$core2_year1" -eq 2009 ]; then
+   # savethe last restart files
+   mv -v $ResultPath/fesom.2009.oce.restart.nc $ResultPath/backup/fesom.2009.oce.restart.$tracer_year.nc
+   mv -v $ResultPath/fesom.2009.ice.restart.nc $ResultPath/backup/fesom.2009.ice.restart.$tracer_year.nc
+   # free some disk space
+   rm -v $ResultPath/fesom.????.?ce.restart.nc 
+   #  redefine initial values and reset the fesom clock
+   echo "Preparing the next repeat cycle ... "
+   cp -v $ResultPath/backup/fesom.2009.oce.restart.$tracer_year.nc $ResultPath/fesom.1947.oce.restart.nc
+   cp -v $ResultPath/backup/fesom.2009.ice.restart.$tracer_year.nc $ResultPath/fesom.1947.ice.restart.nc
+   cp -v fesom.1947.clock $ResultPath/fesom.clock
+fi
+sbatch --dependency=afterok:$SLURM_JOB_ID fesom2_bgc_anthro3.job
+
+date
+srun --mpi=pmi2 ./fesom.x > "fesom2_bgc.out"
+
+# Save 14C results and prepare to read next year's tracer forcing data
+mv -v fesom2_bgc.out $ResultPath/fesom2_bgc_anthro3.$tracer_year
+#mv -v $ResultPath/tra_014.fesom.$core2_year2.nc $ResultPath/tra_014.fesom.$tracer_year.nc
+cdo timmean $ResultPath/tra_014.fesom.$core2_year2.nc $ResultPath/tra_014.fesom.$tracer_year.nc
+rm -v $ResultPath/tra_014.fesom.$core2_year2.nc
+((tracer_year=$tracer_year+1))
+echo $tracer_year > $ResultPath/tracer.clock
+date
