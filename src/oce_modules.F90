@@ -361,16 +361,15 @@ MODULE bgc
   ! real(kind=8), parameter :: decay14 = 3.8534e-12  ! if 1 a := 365.25 d
   real(kind=8) :: decay14 = 3.8561e-12 ! if 1 a := 365.00 d
   ! real(kind=WP), parameter :: decay14 = 3.9096e-12  ! if 1 a: = 360.0 d
+  real(kind=8) :: y_abc               ! latitude of/for atmospheric boundary conditions
   ! Switches for off-line simulations
   logical ::  offline = .false., online = .true. ! on-line simulations (default setup)
   ! logical :: offline = .true., online = .true.  ! diagnose dynamic fields to be used in off-line simulations
   ! logical :: offline = .true., online = .false. ! enable off-line simulations
-  ! Switch for transient tracer forcing
-  logical :: transient = .false.                 ! transient tracer forcing
   
   ! Namelist to modify default parameter settings
   namelist / bgc_param / r14c_a, r14c_nh, r14c_tz, r14c_sh, xco2_a, xf12_a, dic_0, decay14, &
-                         offline, online, transient
+                         offline, online
 
 
   contains
