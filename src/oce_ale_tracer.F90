@@ -1204,6 +1204,7 @@ FUNCTION bc_surface(n, id)
   USE g_PARSUP, only: mype, par_ex
   USE g_config
   use bgc
+  use o_mesh ! MB needed for transient tracer simulations
   use i_arrays, only: a_ice
   implicit none
 
@@ -1226,6 +1227,11 @@ FUNCTION bc_surface(n, id)
 
     CASE (14) ! apply boundary conditions to tracer ID=14 (the fractionation-corrected 14C/12C ratio)
       ! flux_r14co2 is the local 14CO2 air-sea exchange flux (in m / s) for homogenous DIC in the mixed layer
+      y_abc = geo_coord_nod2D(2,n)/rad  ! determine latitude of 14C input
+      if ((r14c_a /= r14c_nh) .and. (y_abc > 30))  r14c_a = r14c_nh
+      if ((r14c_a /= r14c_sh) .and. (y_abc <- 30)) r14c_a = r14c_sh
+      if ((r14c_a /= r14c_tz) .and. (y_abc <= 30) .and. (y_abc >= -30))  r14c_a = r14c_tz
+
       bc_surface = dt * flux_r14co2(tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
                                     Pair(n), xco2_a, r14c_a, tr_arr(1,n,3), dic_0)
       ! print check values
