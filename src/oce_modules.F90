@@ -394,7 +394,7 @@ MODULE bgc
       ! Computation of 14CO2 fluxes following Wanninkhof (2014, equation 5)
       ! assuming local air-sea flux equilibrium for CO2 and using SI units:
       ! 0.251 (cm / h) / (m / s)**2 by Wanninkhof (2014) -> 6.9722e-7 s / m
-      flux_r14co2 = 6.9722e-7 * solub_co2(temp_c, sal) * sc_660(temp_c)**(-0.5) * & 
+      flux_r14co2 = 6.9722e-7 * solub("co2", temp_c, sal) * sc_660("co2", temp_c)**(-0.5) * & 
                   (u_10**2 + v_10**2) * partial_press(xco2_a, p_air, temp_c, sal) * & 
                   (r14c_a - r14c_w) * (1. - f_ice) / dic_0
 
@@ -424,46 +424,72 @@ MODULE bgc
       temp_k100 = (temp_c + 273.15) * 0.01
       p_h2o = exp(24.4543 - 67.4509 / temp_k100 - 4.8489 * log(temp_k100) - 0.000544 * sal)
 
-      ! partial pressure in moist air in atm, 1 atm = 1.01325 Pa
-      partial_press = x_gas  * (p_air / 1.01325e5 - p_h2o)
+      ! partial pressure in moist air in atm, 1 atm = 101325 Pa
+      partial_press = x_gas  * (1. - p_h2o) * p_air / 1.01325e5 
 
       return 
     end function partial_press
 
 
-    function solub_co2(temp_c, sal)
-    ! Solubility of CO2 in seawater in mol / (m**3 * atm).
+    function solub(which_tracer, temp_c, sal)
+    ! Solubility of CO2, CFC-12, and SF6 in seawater in mol / (m**3 * atm).
       implicit none
 
-      real(kind=8) :: solub_CO2
-      real(kind=8), intent(in) :: temp_c, sal
-      ! temp_c = temperature in deg C
-      ! sal = salinity in PSU or permil
-      real(kind=8) :: temp_k100
+      character(len=3), intent(in) :: which_tracer  ! tracer name
+      real(kind=8), intent(in) :: temp_c, &         ! input temperature in deg C
+                                  sal               ! input salinity in PSU or permil
+      real(kind=8) :: solub, &                      ! solubility
+                      a1, a2, a3, b1, b2, b3, &     ! polynomial coefficients of the solubility function 
+                      temp_k100                     ! absolute temperature / 100
 
       temp_k100 = (temp_c + 273.15) * 0.01
 
-      ! CO2 solubility according to Weiss, 1974 (eq. 12 and tab. I). We follow the OMPIC-BCG recommendations
-      ! for "abiotic" carbon tracers (Orr et al. 2017, eq. 17-18 and tab. 3) to use this solubility function
-      ! instead of the one by Weiss & Price (1985). Multiplication with 1000 converts from 1 / L  to 1 / m**3.
-      solub_co2 = exp(-58.0931 + 90.5069 / temp_k100 + 22.2940 * log(temp_k100) + & 
-                       sal * (0.027766 - 0.025888 * temp_k100 + 0.0050578 * temp_k100**2)) * 1000
-
+      select case (which_tracer)
+      case ("co2")
+!       CO2 solubility according to Weiss, 1974 (eq. 12 and tab. I). We follow the OMPIC-BCG recommendations
+!       for "abiotic" carbon tracers (Orr et al. 2017, eq. 17-18 and tab. 3) to use this solubility function
+!       instead of the one by Weiss & Price (1985). Multiplication with 1000 converts from 1 / L  to 1 / m**3.
+        a1 = -58.0931 ; a2 =  90.5069;  a3 = 22.2940
+        b1 =  0.027766; b2 = -0.025888; b3 = 0.0050578
+!!        solub = exp(-58.0931 + 90.5069 / temp_k100 + 22.2940 * log(temp_k100) + & 
+!!                    sal * (0.027766 - 0.025888 * temp_k100 + 0.0050578 * temp_k100**2)) * 1000
+      case ("f12") 
+!       CFC-12 !! CHECK, ADD REF
+        a1 = -122.3246; a2 = 182.5306; a3 = 50.5898
+        b1 = -0.145633; b2 = 0.092509; b3 = -0.0156627 
+      case ("sf6") 
+!       SF6 !! CHECK, ADD REF
+        a1 = -96.5975; a2 = 139.883; a3 = 37.8193
+        b1 =  0.0310693; b2 = -0.0356385; b3 0.00743254
+      end select
+      solub = exp(       a1 + a2 / temp_k100 + a3 * log(temp_k100) + & 
+                  sal * (b1 - b2 * temp_k100 + b3 * temp_k100**2)) * 1000
       return
-    end function solub_co2
+    end function solub
 
 
-    function sc_660(temp_c)
-    ! Schmidt number of CO2 in sea water with S = 35 (Wanninkhof 2014, tab. 1) normalized to 20 degC (Sc ~ 660).
+    function sc_660(which_tracer, temp_c)
+    ! Schmidt numbers of CO2, CFC-12 and SF6 in sea water with S = 35 (Wanninkhof 2014, tab. 1) normalized to 20 degC (Sc ~ 660).
       implicit none
       
       real(kind=8) :: sc_660
-      real(kind=8), intent(in) :: temp_c
-
-      sc_660 = (2116.8 - 136.25 *temp_c + 4.7353 * temp_c**2 - 0.092307 * temp_c**3 + 0.0007555 * temp_c**4) / 660
-
+      character(len=3), intent(in) :: which_tracer ! tracer name
+      real(kind=8), intent(in) :: temp_c           ! input temperature in deg C
+      real(kind=8) :: sc_660, &                    ! Schmidt number
+                      as, bs, cs, ds, es           ! polynomial coefficients
+      select case (which_tracer)
+      case ("co2") ! CO2
+        as = 2116.8; bs = -136.25; cs = 4.7353; ds = -0.092307; es = 0.0007555
+!!        sc_660 = (2116.8 - 136.25 *temp_c + 4.7353 * temp_c**2 - 0.092307 * temp_c**3 + 0.0007555 * temp_c**4) / 660
+      case ("f12") ! CFC-12
+        as = 3828.1; bs = -249.86; cs = 8.7603; ds = -0.171600; es = 0.0014080
+      case ("sf6") ! SF6
+        as = 3177.5; bs = -200.57; cs = 6.8865; ds = -0.133350; es = 0.0010877
+      end select
+      sc_660 = (as + bs *temp_c + cs * temp_c**2 + ds * temp_c**3 + es * temp_c**4) / 660
+      
       return
-    end function Sc_660
+    end function sc_660
 
 
 END MODULE bgc
