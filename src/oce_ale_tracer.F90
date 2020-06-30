@@ -1214,6 +1214,9 @@ FUNCTION bc_surface(n, id)
 
   !  --> is_nonlinfs=1.0 for zelvel,zstar ....                            
   !  --> is_nonlinfs=0.0 for linfs
+
+  y_abc = geo_coord_nod2D(2,n) / rad  ! latitude of atmospheric tracer input
+
   SELECT CASE (id)
     CASE (0)
       bc_surface=-dt*(heat_flux(n)/vcpw + tr_arr(1,n,1)*water_flux(n)*is_nonlinfs)
@@ -1226,16 +1229,36 @@ FUNCTION bc_surface(n, id)
     bc_surface= dt*(prec_rain(n))! - real_salt_flux(n)*is_nonlinfs)
 
     CASE (14) ! apply boundary conditions to tracer ID=14 (the fractionation-corrected 14C/12C ratio)
-      ! flux_r14co2 is the local 14CO2 air-sea exchange flux (in m / s) for homogenous DIC in the mixed layer
-      y_abc = geo_coord_nod2D(2,n)/rad  ! determine latitude of 14C input
+!     flux_r14co2 is the local 14CO2 air-sea exchange flux (in m / s) for homogenous DIC in the mixed layer
       if ((r14c_a /= r14c_nh) .and. (y_abc > 30))  r14c_a = r14c_nh
       if ((r14c_a /= r14c_sh) .and. (y_abc <- 30)) r14c_a = r14c_sh
       if ((r14c_a /= r14c_tz) .and. (y_abc <= 30) .and. (y_abc >= -30))  r14c_a = r14c_tz
 
       bc_surface = dt * flux_r14co2(tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
                                     Pair(n), xco2_a, r14c_a, tr_arr(1,n,3), dic_0)
-      ! print check values
-      ! if (mype==0) print *, $check_values
+
+    CASE (12) ! apply boundary conditions to tracer ID=12 (CFC-12)
+!     flux_xf12 is the local CFC-12 air-sea exchange flux (in m / s)
+      if ((xf12_a /= xf12_nh) .and. (y_abc > 30))  xf12_a = xf12_nh
+      if ((xf12_a /= xf12_sh) .and. (y_abc <- 30)) xf12_a = xf12_sh
+!!      if ((xf12_a /= xf12_nh) .and. (y_abc <= 30) .and. (y_abc >= -30))  then
+!!         xf12_a = ! interpolate values
+!!      end if
+
+!!      bc_surface = dt * flux_xf12(tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
+!!                                    Pair(n), xco2_a, xf12_a, tr_arr(1,n,4), dic_0)
+
+    CASE (6) ! apply boundary conditions to tracer ID=6 (SF6)
+!     flux_xf12 is the local CFC-12 air-sea exchange flux (in m / s)
+      if ((xsf6_a /= xsf6_nh) .and. (y_abc > 30))  xsf6_a = xsf6_nh
+      if ((xsf6_a /= xsf6_sh) .and. (y_abc <- 30)) xsf6_a = xsf6_sh
+!!      if ((xsf6_a /= xsf6_nh) .and. (y_abc <= 30) .and. (y_abc >= -30))  then
+!!         xsf6_a = ! interpolate values
+!!      end if
+
+!!      bc_surface = dt * flux_xsf6(tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
+!!                                    Pair(n), xco2_a, xsf6_a, tr_arr(1,n,5), dic_0)
+
 
     CASE DEFAULT
       if (mype==0) then
