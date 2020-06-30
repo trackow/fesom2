@@ -333,6 +333,10 @@ USE g_ic3d
          end if
        CASE (14)        ! initialize tracer ID=14, fractionation-corrected 14C/12C
   !      this is just a dummy because 14C/12C is initialized calling do_ic3d
+       CASE (12)        ! initialize tracer ID=12, CFC-12
+  !      this is just a dummy because CFC-12 is initialized calling do_ic3d
+       CASE (6)         ! initialize tracer ID=6, SF6
+  !      this is just a dummy because SF6 is initialized calling do_ic3d
        CASE (3)
          if (mype==0) then
             write (i_string,  "(I3)") i
