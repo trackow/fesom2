@@ -126,6 +126,14 @@ subroutine ini_ocean_io(year)
          trname='r14c'
          longname='radiocarbon'
          units='none'
+       CASE(12)
+         trname='xf12'
+         longname='cfc-12'
+         units='none'
+       CASE(6)
+         trname='xsf6'
+         longname='sulfur hexafluoride'
+         units='none'
        CASE DEFAULT
          write(trname,'(A3,i1)') 'tra_', j
          write(longname,'(A15,i1)') 'passive tracer ', j
