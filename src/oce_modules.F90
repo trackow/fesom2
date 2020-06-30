@@ -345,7 +345,7 @@ MODULE bgc
   save
 
   ! Normalized and fractionation-corrected atmospheric 14CO2 / 12CO2 ratios
-  real(kind=8) :: r14c_a  = 1.0, & ! Global average
+  real(kind=8) :: r14c_a  = 1.0, & ! Global average and/or value in air-sea flux calculation
                   r14c_nh = 1.0, & ! Northern Hemisphere
                   r14c_tz = 1.0, & ! Tropics
                   r14c_sh = 1.0    ! Southern Hemisphere
@@ -353,11 +353,14 @@ MODULE bgc
   ! CMIP6 & OMIP-BGC: xCO2_a = 284.32 ppm for 1700-1850 CE
   ! PMIP4:            xCO2_a = 190.00 ppm for 21 kcal BP
   real(kind=8) :: xCO2_a = 284.23e-6  ! mole fraction in dry air
-  ! Atmospheric CFC-12 and SF6 concentrations (mole fractions in dry air)
-  real(kind=8) :: xf12_nh = 0.00e-12   ! CFC-12, Northern Hemisphere
-  real(kind=8) :: xf12_sh = 0.00e-12   ! CFC-12, Southern Hemisphere
-  real(kind=8) :: xsf6_nh = 0.00e-12   ! SF6, Northern Hemisphere
-  real(kind=8) :: xsf6_sh = 0.00e-12   ! SF6, Southern Hemisphere
+  ! Atmospheric CFC-12 concentration (mole fraction in dry air)
+  real(kind=8) :: xf12_a  = 0.00e-12, &  ! value passed in air-sea flux calculation
+                  xf12_nh = 0.00e-12, &  ! Northern Hemisphere
+                  xf12_sh = 0.00e-12     ! Southern Hemisphere
+  ! Atmospheric SF6 concentration (mole fraction in dry air)
+  real(kind=8) :: xsf6_a  = 0.00e-12, &  ! value passed in air-sea flux calculation
+                  xsf6_nh = 0.00e-12, &  ! Northern Hemisphere
+                  xsf6_sh = 0.00e-12     ! Southern Hemisphere
   
   ! Global-mean DIC concentration in the mixed layer (mol / m**3)
   real(kind=8) :: dic_0 = 2.00        ! GLODAPv2, 0-50 m: TCO2 ~ 2050 umol / kg
@@ -373,7 +376,9 @@ MODULE bgc
   
   ! Namelist to modify default parameter settings
   namelist / bgc_param / r14c_a, r14c_nh, r14c_tz, r14c_sh, xco2_a, &
-                         xf12_nh, xf12_sh, xsf6_nh, xsf6_sh, dic_0, decay14, &
+                         xf12_a, xf12_nh, xf12_sh, &
+                         xsf6_a, xsf6_nh, xsf6_sh, &
+                         dic_0, decay14, &
                          offline, online
 
 
@@ -409,6 +414,58 @@ MODULE bgc
 
       return
     end function flux_r14co2
+
+
+    function flux_xf12(temp_c, sal, u_10, v_10, f_ice, p_air, xco2_a, xf12_a,  xf12_w)
+    ! Calculate CFC-12 air-sea exchange fluxes in m / s, positive values mean oceanic CFC-12 uptake.
+      implicit none
+
+      real(kind=8) :: flux_xf12
+      real(kind=8), intent(in) :: temp_c, sal, u_10, v_10, f_ice, p_air, xco2_a, xf12_a, xf12_w
+      ! temp_c = temperature in deg C
+      ! sal = salinity in PSU or permil
+      ! u_10, v_10 = zonal and meridional wind speed (m / s) at 10 m height
+      ! f_ice = sea-ice fractional coverage
+      ! p_air = total atmospheric pressure (Pa)
+      ! xco2_a = mole fraction of atmospheric CO2
+      ! xf12_a, xf12_w = CFC-12 in atmosphere and surface water
+      ! real(kind=8) :: solub, sc_660, partial_press
+      ! functions to calculate solubility, normalized Schmidt number and partial pressure of CFC-12
+      ! Computation of CFC-12 fluxes following Wanninkhof (2014, equation 5)
+      ! assuming local air-sea flux equilibrium for CO2 and using SI units:
+      ! 0.251 (cm / h) / (m / s)**2 by Wanninkhof (2014) -> 6.9722e-7 s / m
+      flux_xf12 = 6.9722e-7 * solub("xf12", temp_c, sal) * sc_660("xf12", temp_c)**(-0.5) * & 
+                  (u_10**2 + v_10**2) * partial_press(xf12_a, p_air, temp_c, sal) * & 
+                  (xf12_a - xf12_w) * (1. - f_ice)
+
+      return
+    end function flux_xf12
+
+
+    function flux_xsf6(temp_c, sal, u_10, v_10, f_ice, p_air, xco2_a, xsf6_a,  xsf6_w)
+    ! Calculate SF6 air-sea exchange fluxes in m / s, positive values mean oceanic SF6 uptake.
+      implicit none
+
+      real(kind=8) :: flux_xsf6
+      real(kind=8), intent(in) :: temp_c, sal, u_10, v_10, f_ice, p_air, xco2_a, xsf6_a, xsf6_w
+      ! temp_c = temperature in deg C
+      ! sal = salinity in PSU or permil
+      ! u_10, v_10 = zonal and meridional wind speed (m / s) at 10 m height
+      ! f_ice = sea-ice fractional coverage
+      ! p_air = total atmospheric pressure (Pa)
+      ! xco2_a = mole fraction of atmospheric CO2
+      ! xsf6_a, xsf6_w = SF6 in atmosphere and surface water
+      ! real(kind=8) :: solub, sc_660, partial_press
+      ! functions to calculate solubility, normalized Schmidt number and partial pressure of SF6
+      ! Computation of SF6 fluxes following Wanninkhof (2014, equation 5)
+      ! assuming local air-sea flux equilibrium for CO2 and using SI units:
+      ! 0.251 (cm / h) / (m / s)**2 by Wanninkhof (2014) -> 6.9722e-7 s / m
+      flux_xsf6 = 6.9722e-7 * solub("xsf6", temp_c, sal) * sc_660("xsf6", temp_c)**(-0.5) * & 
+                  (u_10**2 + v_10**2) * partial_press(xsf6_a, p_air, temp_c, sal) * & 
+                  (xsf6_a - xsf6_w) * (1. - f_ice)
+
+      return
+    end function flux_xsf6
 
 
     function partial_press(x_gas, p_air, temp_c, sal)
