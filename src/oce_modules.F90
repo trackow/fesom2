@@ -352,9 +352,13 @@ MODULE bgc
   ! Atmospheric CO2 concentration
   ! CMIP6 & OMIP-BGC: xCO2_a = 284.32 ppm for 1700-1850 CE
   ! PMIP4:            xCO2_a = 190.00 ppm for 21 kcal BP
-  real(kind=8) :: xco2_a = 284.23e-6  ! mole fraction in dry air
-  ! Atmospheric CFC-12 concentration
-  real(kind=8) :: xf12_a = 0.00e-12   ! mole fraction in dry air
+  real(kind=8) :: xCO2_a = 284.23e-6  ! mole fraction in dry air
+  ! Atmospheric CFC-12 and SF6 concentrations (mole fractions in dry air)
+  real(kind=8) :: xf12_nh = 0.00e-12   ! CFC-12, Northern Hemisphere
+  real(kind=8) :: xf12_sh = 0.00e-12   ! CFC-12, Southern Hemisphere
+  real(kind=8) :: xsf6_nh = 0.00e-12   ! SF6, Northern Hemisphere
+  real(kind=8) :: xsf6_sh = 0.00e-12   ! SF6, Southern Hemisphere
+  
   ! Global-mean DIC concentration in the mixed layer (mol / m**3)
   real(kind=8) :: dic_0 = 2.00        ! GLODAPv2, 0-50 m: TCO2 ~ 2050 umol / kg
   ! Decay constant of 14C (1 / s), t1/2 = 5700 a following OMIP-BGC
@@ -368,7 +372,8 @@ MODULE bgc
   ! logical :: offline = .true., online = .false. ! enable off-line simulations
   
   ! Namelist to modify default parameter settings
-  namelist / bgc_param / r14c_a, r14c_nh, r14c_tz, r14c_sh, xco2_a, xf12_a, dic_0, decay14, &
+  namelist / bgc_param / r14c_a, r14c_nh, r14c_tz, r14c_sh, xco2_a, &
+                         xf12_nh, xf12_sh, xsf6_nh, xsf6_sh, dic_0, decay14, &
                          offline, online
 
 
@@ -469,7 +474,8 @@ MODULE bgc
 
 
     function sc_660(which_tracer, temp_c)
-    ! Schmidt numbers of CO2, CFC-12 and SF6 in sea water with S = 35 (Wanninkhof 2014, tab. 1) normalized to 20 degC (Sc ~ 660).
+    ! Schmidt numbers of CO2, CFC-12 and SF6 in sea water with S = 35 
+    ! normalized to 20 degC (Sc ~ 660;  Wanninkhof 2014, tab. 1)).
       implicit none
       
       real(kind=8) :: sc_660
