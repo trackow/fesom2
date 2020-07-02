@@ -339,86 +339,81 @@ END MODULE o_ARRAYS
 
 !==========================================================
 MODULE bgc
-! Parameters, variables and functions for BGC / tracer simulations.
+! Parameters, variables and functions for transient tracer simulations.
 
   implicit none
   save
 
-  ! Normalized and fractionation-corrected atmospheric 14CO2 / 12CO2 ratios
+! Normalized and fractionation-corrected atmospheric 14CO2 / 12CO2 ratios
   real(kind=8) :: r14c_a  = 1.0, & ! Global average and/or value in air-sea flux calculation
                   r14c_nh = 1.0, & ! Northern Hemisphere
                   r14c_tz = 1.0, & ! Tropics
                   r14c_sh = 1.0    ! Southern Hemisphere
-  ! Atmospheric CO2 concentration
-  ! CMIP6 & OMIP-BGC: xCO2_a = 284.32 ppm for 1700-1850 CE
-  ! PMIP4:            xCO2_a = 190.00 ppm for 21 kcal BP
+! Normalized and fractionation-corrected atmospheric 39Ar/40Ar ratio
+  real(kind=8) :: r39ar_a  = 1.0   ! Global average and/or value in air-sea flux calculation
+! Atmospheric CO2 concentration
+! CMIP6 & OMIP-BGC: xCO2_a = 284.32 ppm for 1700-1850 CE
+! PMIP4:            xCO2_a = 190.00 ppm for 21 kcal BP
   real(kind=8) :: xCO2_a = 284.23e-6  ! mole fraction in dry air
-  ! Atmospheric CFC-12 concentration (mole fraction in dry air)
+! Atmospheric CFC-12 concentration (mole fraction in dry air)
   real(kind=8) :: xf12_a  = 0.00e-12, &  ! value passed in air-sea flux calculation
                   xf12_nh = 0.00e-12, &  ! Northern Hemisphere
                   xf12_sh = 0.00e-12     ! Southern Hemisphere
-  ! Atmospheric SF6 concentration (mole fraction in dry air)
+! Atmospheric SF6 concentration (mole fraction in dry air)
   real(kind=8) :: xsf6_a  = 0.00e-12, &  ! value passed in air-sea flux calculation
                   xsf6_nh = 0.00e-12, &  ! Northern Hemisphere
                   xsf6_sh = 0.00e-12     ! Southern Hemisphere
-  
-  ! Global-mean DIC concentration in the mixed layer (mol / m**3)
+! Global-mean DIC concentration in the mixed layer (mol / m**3)
   real(kind=8) :: dic_0 = 2.00        ! GLODAPv2, 0-50 m: TCO2 ~ 2050 umol / kg
-  ! Decay constant of 14C (1 / s), t1/2 = 5700 a following OMIP-BGC
-  ! real(kind=8), parameter :: decay14 = 3.8534e-12  ! if 1 a := 365.25 d
-  real(kind=8) :: decay14 = 3.8561e-12 ! if 1 a := 365.00 d
-  ! real(kind=WP), parameter :: decay14 = 3.9096e-12  ! if 1 a: = 360.0 d
-  real(kind=8) :: y_abc               ! latitude of/for atmospheric boundary conditions
-  ! Switches for off-line simulations
+! Radioactive decay constants (1 / s; default values assume that 1 year = 365.00 days)
+  real(kind=8) :: decay14 = 3.8561e-12 , & ! 14C; t1/2 = 5700 a following OMIP-BGC
+                  decay39 = 8.1708e-11     ! 39Ar; t1/2 = 269 a
+! Latitude of/for atmospheric boundary conditions
+  real(kind=8) :: y_abc
+! Switches for off-line simulations
   logical ::  offline = .false., online = .true. ! on-line simulations (default setup)
-  ! logical :: offline = .true., online = .true.  ! diagnose dynamic fields to be used in off-line simulations
-  ! logical :: offline = .true., online = .false. ! enable off-line simulations
+! logical :: offline = .true., online = .true.  ! diagnose dynamic fields to be used in off-line simulations
+! logical :: offline = .true., online = .false. ! enable off-line simulations
   
-  ! Namelist to modify default parameter settings
-  namelist / bgc_param / r14c_a, r14c_nh, r14c_tz, r14c_sh, xco2_a, &
-                         xf12_a, xf12_nh, xf12_sh, &
-                         xsf6_a, xsf6_nh, xsf6_sh, &
-                         dic_0, decay14, &
+! Namelist to modify default parameter settings
+  namelist / bgc_param / r14c_a, r14c_nh, r14c_tz, r14c_sh, xco2_a, &  ! atmospheric values for Delta14C
+                         xf12_a, xf12_nh, xf12_sh, &                   ! atmospheric values for CFC-12
+                         xsf6_a, xsf6_nh, xsf6_sh, &                   ! atmospheric values for SF6
+                         dic_0, decay14, &                             ! both are needed for Delta14C
                          offline, online
 
 
   contains
 
 
-    function flux_r14co2(temp_c, sal, u_10, v_10, f_ice, p_air, xco2_a, r14c_a,  r14c_w, dic_0)
-    ! Calculate 14CO2 air-sea exchange fluxes in m / s, positive values mean oceanic 14C uptake.
+    function iso_flux(temp_c, sal, u_10, v_10, f_ice, p_air, x_gas, iso_a, iso_w, c_surf)
+!     Calculate isotopic air-sea exchange fluxes in m / s, positive values mean oceanic uptake.
+!     This function should become obsolete as it could be replaced with function gas_flux().
       implicit none
 
-      real(kind=8) :: flux_r14co2
-      real(kind=8), intent(in) :: temp_c, sal, u_10, v_10, f_ice, p_air, xco2_a, r14c_a, r14c_w, dic_0
-      ! temp_c = temperature in deg C
-      ! sal = salinity in PSU or permil
-      ! u_10, v_10 = zonal and meridional wind speed (m / s) at 10 m height
-      ! f_ice = sea-ice fractional coverage
-      ! p_air = total atmospheric pressure (Pa)
-      ! xco2_a = mole fraction of atmospheric CO2
-      ! r14c_a, r14c_w = 14C/12C in atmosphere and surface water
-      ! dic_0 = concentration of DIC in surface water
-      ! real(kind=8) :: solub_co2, sc_660, partial_press
-      ! functions to calculate solubility, normalized Schmidt number and partial pressure of CO2
-      ! Computation of 14CO2 fluxes following Wanninkhof (2014, equation 5)
-      ! assuming local air-sea flux equilibrium for CO2 and using SI units:
-      ! 0.251 (cm / h) / (m / s)**2 by Wanninkhof (2014) -> 6.9722e-7 s / m
-!      flux_r14co2 = 6.9722e-7 * solub("co2", temp_c, sal) * sc_660("co2", temp_c)**(-0.5) * & 
-!                  (u_10**2 + v_10**2) * partial_press(xco2_a, p_air, temp_c, sal) * & 
-!                  (r14c_a - r14c_w) * (1. - f_ice) / dic_0
+      real(kind=8) :: iso_flux
+!     Input parameters
+      real(kind=8), intent(in) :: temp_c, sal, u_10, v_10, f_ice, p_air, x_gas, iso_a, iso_w, c_surf
+!     temp_c = temperature (SST) in deg C
+!     sal = salinity in PSU or permil
+!     u_10, v_10 = zonal and meridional wind speed (m / s) at 10 m height
+!     f_ice = sea-ice fractional coverage
+!     p_air = total atmospheric pressure (Pa)
+!     x_gas = mole fraction of atmospheric trace gas (for F14C: 12CO2)
+!     iso_a, iso_w = normalized isotopic ratios (14C/12C or 39/40Ar) in atmosphere and surface water
+!     c_surf = tracer concentration (e.g. of DIC) in surface water
 
-      flux_r14co2 = transfer_vel("co2", temp_c, u_10, v_10) * &
-                    solub("co2", temp_c, sal) * partial_press(xco2_a, p_air, temp_c, sal) * &
-                    (r14c_a - r14c_w) * (1. - f_ice) / dic_0
-
-      ! Approximation by Wanninkhof (2014, equation 6) and approximating pCO2 with xco2_a
-      ! 7.7e-4 mol / (m**2 * a * uatm) by Wanninkhof -> 2.4e-5 mol / (m**2 * s * atm)
-      ! flux_r14co2 = 2.4e-5 * (u_10**2 + v_10**2) * xCO2_a * (r14c_a - r14c_w) * (1. - f_ice) / dic_0
-
+!     Computation of 14CO2 fluxes following Wanninkhof (2014, equation 5)
+!     assuming local air-sea flux equilibrium for CO2 and using SI units:
+!     0.251 (cm / h) / (m / s)**2 by Wanninkhof (2014) -> 6.9722e-7 s / m
+!!      flux_r14co2 = 6.9722e-7 * solub("co2", temp_c, sal) * sc_660("co2", temp_c)**(-0.5) * & 
+!!                    (u_10**2 + v_10**2) * partial_press(xco2_a, p_air, temp_c, sal) * & 
+!!                    (r14c_a - r14c_w) * (1. - f_ice) / dic_0
+      iso_flux = transfer_vel("co2", temp_c, u_10, v_10) * &
+                 solub("co2", temp_c, sal) * partial_press(x_gas, p_air, temp_c, sal) * &
+                 (iso_a - iso_w) * (1. - f_ice) / c_surf
       return
-    end function flux_r14co2
-
+    end function iso_flux
 
     function gas_flux(which_gas, temp_c, sal, u_10, v_10, f_ice, p_air, x_gas, c_surf)
 !     Computes air-sea exchange gas fluxes in m / s, positive values mean oceanic uptake.
@@ -434,12 +429,9 @@ MODULE bgc
                                   x_gas, &       ! atmospheric mole fraction 
                                   c_surf         ! marine surface water concentration (mol / m**3)
 !     Internal variables
-      real(kind=8) :: c_sat, &                   ! marine saturation concentration (mol / m**3)
-                      solub, &                   ! solubility (mol / (m**3 atm))
-                      partial_press              ! partial pressure of trace gas (Pa)
-
+      real(kind=8) :: c_sat                      ! marine saturation concentration (mol / m**3)
       c_sat = solub(which_gas, temp_c, sal) * partial_press(x_gas, p_air, temp_c, sal) * x_gas
-      gas_flux = transfer_vel(which_gas, u_10, v_10) * (c_sat - c_surf) * (1. - f_ice)
+      gas_flux = transfer_vel(which_gas, temp_c, u_10, v_10) * (c_sat - c_surf) * (1. - f_ice)
 
       return
     end function gas_flux
@@ -478,7 +470,8 @@ MODULE bgc
       real(kind=8), intent(in) :: temp_c, &      ! temperature (deg C)
                                   sal            ! salinity ("PSU" or permil)
       real(kind=8) :: a1, a2, a3, b1, b2, b3, &  ! polynomial coefficients of the solubility function 
-                      temp_k100                  ! water temperature in K / 100
+                      temp_k100, &               ! water temperature in K / 100
+                      per_m3 = 1000.             ! factor to convert from 1 / L to 1 / m**3
 
       temp_k100 = (temp_c + 273.15) * 0.01
 
@@ -496,24 +489,31 @@ MODULE bgc
 !       CFC-12 !! CHECK, ADD REF
         a1 = -122.3246; a2 = 182.5306; a3 = 50.5898
         b1 = -0.145633; b2 = 0.092509; b3 = -0.0156627 
+        per_m3 = per_m3 * 1e12 ! -> solubility in pmol / m**3
       case ("sf6") 
 !       SF6 !! CHECK, ADD REF
         a1 = -96.5975; a2 = 139.883; a3 = 37.8193
         b1 =  0.0310693; b2 = -0.0356385; b3 = 0.00743254
+        per_m3 = per_m3 * 1e12 ! -> solubility in pmol / m**3
+      case("arg")
+!       Ar-39, Bunsen coefficient -> convert to K' <- UNDER CONSTRUCTION
+        a1 = -55.6578; a2 = 82.0262; a3 = 22.5929
+        b1 = -0.036267; b2 = 0.016241; b3 = -0.0020114
+!       per_m3 =  
       end select
-
 
       solub = exp(       a1 + a2 / temp_k100 + a3 * log(temp_k100) + & 
                   sal * (b1 - b2 * temp_k100 + b3 * temp_k100**2))  ! in mol / L
-      solub = solub * 1000.                                         ! in mol / m**3.
+      solub = solub * per_m3
+
 
       return
     end function solub
 
 
     function sc_660(which_gas, temp_c)
-!     Schmidt numbers of CO2, CFC-12 and SF6 in sea water with S = 35 
-!     normalized to 20 degC (Sc ~ 660;  Wanninkhof 2014, tab. 1)).
+!     Schmidt numbers of trace gases in sea water with S = 35 
+!     normalized to 20 degC (Sc(CO2) ~660; Wanninkhof 2014, tab. 1)).
       implicit none
 
 !     Result
@@ -521,9 +521,9 @@ MODULE bgc
 !     Input parameters
       character(len=3), intent(in) :: which_gas    ! tracer name
       real(kind=8), intent(in) :: temp_c           ! temperature (deg C)
-
 !     Internal parameters and/or variables
       real(kind=8) :: as, bs, cs, ds, es           ! polynomial coefficients
+
       select case (which_gas)
       case ("co2") ! CO2
         as = 2116.8; bs = -136.25; cs = 4.7353; ds = -0.092307; es = 0.0007555
@@ -532,6 +532,8 @@ MODULE bgc
         as = 3828.1; bs = -249.86; cs = 8.7603; ds = -0.171600; es = 0.0014080
       case ("sf6") ! SF6
         as = 3177.5; bs = -200.57; cs = 6.8865; ds = -0.133350; es = 0.0010877
+      case ("arg") ! Ar-39
+        as = 2078.1; bs = -146.74; cs = 5.6403; ds = -0.118380; es = 0.0010148
       end select
       
       sc_660 = (as + bs *temp_c + cs * temp_c**2 + ds * temp_c**3 + es * temp_c**4) / 660.
@@ -546,12 +548,9 @@ MODULE bgc
       real(kind=8) :: transfer_vel                 ! transfer velocity (m / s)
 !     Input parameters
       character(len=3), intent(in) :: which_gas    ! tracer name
-      real(kind=8), intent(in) :: temp_c, &        ! temperature (SST) (deg C)
-                                  u_10, v_10, &    ! wind speed at 10 m height (m / s)
-                                  f_ice            ! sea-ice fractional coverage
-!     Internal parameters and/or variables
-      real(kind=8) :: sc_660                       ! Schmidt number
-      
+      real(kind=8), intent(in) :: temp_c, &        ! temperature (deg C)
+                                  u_10, v_10       ! wind speed at 10 m height (m / s)
+
 !     Wanninkhof (2014), eq. (4) with a = 0.251 (cm / h) / (m / s)**2 -> 6.9722e-7 s / m 
 !     to obtain the gas transfer velocity in m / s
       transfer_vel = 6.9722e-7 * sc_660(which_gas, temp_c)**(-0.5) * (u_10**2 + v_10**2) 
