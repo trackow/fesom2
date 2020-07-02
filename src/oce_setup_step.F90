@@ -337,6 +337,8 @@ USE g_ic3d
   !      this is just a dummy because CFC-12 is initialized calling do_ic3d
        CASE (6)         ! initialize tracer ID=6, SF6
   !      this is just a dummy because SF6 is initialized calling do_ic3d
+       CASE (39)        ! initialize tracer ID=39, fractionation-corrected 39Ar/40Ar
+  !      this is just a dummy because 39Ar/40Ar is initialized calling do_ic3d
        CASE (3)
          if (mype==0) then
             write (i_string,  "(I3)") i
