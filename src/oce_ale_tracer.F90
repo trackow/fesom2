@@ -1228,37 +1228,49 @@ FUNCTION bc_surface(n, id)
     CASE (101) ! apply boundary conditions to tracer ID=101
     bc_surface= dt*(prec_rain(n))! - real_salt_flux(n)*is_nonlinfs)
 
-    CASE (14) ! apply boundary conditions to tracer ID=14 (the fractionation-corrected 14C/12C ratio)
-!     flux_r14co2 is the local 14CO2 air-sea exchange flux (in m / s) for homogenous DIC in the mixed layer
+    CASE (14)
+!     Apply boundary conditions to tracer ID=14 (the fractionation-corrected 14C/12C ratio)
+!     iso_flux is the local isotopic 14CO2 air-sea exchange flux (in m / s) 
+!     for homogenous DIC in the mixed layer
       if ((r14c_a /= r14c_nh) .and. (y_abc > 30))  r14c_a = r14c_nh
       if ((r14c_a /= r14c_sh) .and. (y_abc <- 30)) r14c_a = r14c_sh
       if ((r14c_a /= r14c_tz) .and. (y_abc <= 30) .and. (y_abc >= -30))  r14c_a = r14c_tz
 
-      bc_surface = dt * flux_r14co2(tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
-                                    Pair(n), xco2_a, r14c_a, tr_arr(1,n,3), dic_0)
+      bc_surface = dt * iso_flux(tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
+                                 Pair(n), xco2_a, r14c_a, tr_arr(1,n,3), dic_0)
 
-    CASE (12) ! apply boundary conditions to tracer ID=12 (CFC-12)
+    CASE (12) 
+!     Apply boundary conditions of tracer ID=12 (CFC-12)
 !     flux_xf12 is the local CFC-12 air-sea exchange flux (in m / s)
       if ((xf12_a /= xf12_nh) .and. (y_abc > 30))  xf12_a = xf12_nh
       if ((xf12_a /= xf12_sh) .and. (y_abc <- 30)) xf12_a = xf12_sh
+!!      UNDER CONSTRUCTION
 !!      if ((xf12_a /= xf12_nh) .and. (y_abc <= 30) .and. (y_abc >= -30))  then
 !!         xf12_a = ! interpolate values
 !!      end if
 
-!!      bc_surface = dt * flux_xf12(tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
-!!                                    Pair(n), xco2_a, xf12_a, tr_arr(1,n,4), dic_0)
+      bc_surface = dt * gas_flux("f12", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
+                                 Pair(n), xf12_a, tr_arr(1,n,4))  !! CHECK tr_arr(1,n,index)
 
-    CASE (6) ! apply boundary conditions to tracer ID=6 (SF6)
+    CASE (6) 
+!     Apply boundary conditions to tracer ID=6 (SF6)
 !     flux_xf12 is the local CFC-12 air-sea exchange flux (in m / s)
       if ((xsf6_a /= xsf6_nh) .and. (y_abc > 30))  xsf6_a = xsf6_nh
       if ((xsf6_a /= xsf6_sh) .and. (y_abc <- 30)) xsf6_a = xsf6_sh
+!!      UNDER CONSTRUCTION
 !!      if ((xsf6_a /= xsf6_nh) .and. (y_abc <= 30) .and. (y_abc >= -30))  then
 !!         xsf6_a = ! interpolate values
 !!      end if
 
-!!      bc_surface = dt * flux_xsf6(tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
-!!                                    Pair(n), xco2_a, xsf6_a, tr_arr(1,n,5), dic_0)
+      bc_surface = dt * gas_flux("sf6", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
+                                 Pair(n), xf12_a, tr_arr(1,n,5)) !! CHECK tr_arr(1,n,index)
 
+    CASE (39) 
+!     Apply boundary conditions to tracer ID=39 (Argon-39)
+!!      UNDER CONSTRUCTION
+!!      bc_surface = dt * iso_flux()
+!!      bc_surface = dt * gas_flux("arg", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
+!!                                 Pair(n), xarg_a, tr_arr(1,n,6))
 
     CASE DEFAULT
       if (mype==0) then
