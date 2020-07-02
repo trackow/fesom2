@@ -10,8 +10,8 @@ subroutine solve_tracers_ale
 	use g_comm_auto
 	use o_tracers
 ! include variables for bgc tracer simulations
-	use bgc, only: decay14 ! decay constant of 14C
-	use g_config, only: dt         ! needed to calculate 14C decay
+	use bgc, only: decay14, decay39 ! decay constants of 14C and 39Ar
+	use g_config, only: dt          ! needed to calculate radioactive decay
 
 	implicit none
 	integer :: tr_num
@@ -45,6 +45,9 @@ subroutine solve_tracers_ale
 		! radioactive decay of 14C
 		if (tracer_id(tr_num) == 14) tr_arr(:,:,tr_num) = tr_arr(:,:,tr_num) * exp(-decay14 * dt)
 !!		if (tracer_id(tr_num) == 14) tr_arr(:,:,tr_num) = tr_arr(:,:,tr_num) * (1. - decay14 * dt)
+		! radioactive decay of 39Ar
+		if (tracer_id(tr_num) == 39) tr_arr(:,:,tr_num) = tr_arr(:,:,tr_num) * exp(-decay39 * dt)
+!!		if (tracer_id(tr_num) == 39) tr_arr(:,:,tr_num) = tr_arr(:,:,tr_num) * (1. - decay39 * dt)
 
 		call exchange_nod(tr_arr(:,:,tr_num))
 	end do
