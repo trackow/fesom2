@@ -363,8 +363,9 @@ MODULE bgc
   real(kind=8) :: xsf6_a  = 0.00e-12, &  ! value passed in air-sea flux calculation
                   xsf6_nh = 0.00e-12, &  ! Northern Hemisphere
                   xsf6_sh = 0.00e-12     ! Southern Hemisphere
-! Global-mean DIC concentration in the mixed layer (mol / m**3)
-  real(kind=8) :: dic_0 = 2.00        ! GLODAPv2, 0-50 m: TCO2 ~ 2050 umol / kg
+! Global-mean concentrations of DIC and Argon in the mixed layer (mol / m**3)
+  real(kind=8) :: dic_0 = 2.00, &        ! GLODAPv2, 0-50 m: TCO2 ~ 2050 umol / kg
+                  arg_0 = 0.01           ! Hamme et al. 2019, doi:10.1146/annurev-marine-121916-063604
 ! Radioactive decay constants (1 / s; default values assume that 1 year = 365.00 days)
   real(kind=8) :: decay14 = 3.8561e-12 , & ! 14C; t1/2 = 5700 a following OMIP-BGC
                   decay39 = 8.1708e-11     ! 39Ar; t1/2 = 269 a
@@ -386,36 +387,31 @@ MODULE bgc
   contains
 
 
-    function iso_flux(temp_c, sal, u_10, v_10, f_ice, p_air, x_gas, iso_a, iso_w, c_surf)
-!     Calculate isotopic air-sea exchange fluxes in m / s, positive values mean oceanic uptake.
-!     This function should become obsolete as it could be replaced with function gas_flux().
+    function iso_flux(temp_c, sal, u_10, v_10, f_ice, p_atm, x_gas, r_air, r_sea, c_surf)
+!     Calculate isotopic air-sea exchange fluxes in m / s assuming local solubility equilibrium
+!     for the abundant isotopologue (e.g. 12CO2). Positive values mean oceanic uptake.
       implicit none
 
       real(kind=8) :: iso_flux
 !     Input parameters
-      real(kind=8), intent(in) :: temp_c, sal, u_10, v_10, f_ice, p_air, x_gas, iso_a, iso_w, c_surf
-!     temp_c = temperature (SST) in deg C
-!     sal = salinity in PSU or permil
-!     u_10, v_10 = zonal and meridional wind speed (m / s) at 10 m height
-!     f_ice = sea-ice fractional coverage
-!     p_air = total atmospheric pressure (Pa)
-!     x_gas = mole fraction of atmospheric trace gas (for F14C: 12CO2)
-!     iso_a, iso_w = normalized isotopic ratios (14C/12C or 39/40Ar) in atmosphere and surface water
-!     c_surf = tracer concentration (e.g. of DIC) in surface water
+      character(len=3), intent(in) :: which_gas  ! trace gas name
+      real(kind=8), intent(in) :: temp_c, sal, u_10, v_10, f_ice, p_air, x_gas, r_air, r_sea, c_surf
 
-!     Computation of 14CO2 fluxes following Wanninkhof (2014, equation 5)
-!     assuming local air-sea flux equilibrium for CO2 and using SI units:
-!     0.251 (cm / h) / (m / s)**2 by Wanninkhof (2014) -> 6.9722e-7 s / m
-!!      flux_r14co2 = 6.9722e-7 * solub("co2", temp_c, sal) * sc_660("co2", temp_c)**(-0.5) * & 
-!!                    (u_10**2 + v_10**2) * partial_press(xco2_a, p_air, temp_c, sal) * & 
-!!                    (r14c_a - r14c_w) * (1. - f_ice) / dic_0
-      iso_flux = transfer_vel("co2", temp_c, u_10, v_10) * &
-                 solub("co2", temp_c, sal) * partial_press(x_gas, p_air, temp_c, sal) * &
-                 (iso_a - iso_w) * (1. - f_ice) / c_surf
+      real(kind=8), intent(in) :: temp_c, sal, &   ! SST (deg C) and SSS ("PSU" or permil)
+                                  u_10, v_10,  &   ! wind speed at 10 m height (m / s)
+                                  f_ice, &         ! sea-ice fractional coverage
+                                  p_atm, &         ! total atmospheric pressure (Pa)
+                                  x_gas, &         ! atmospheric mole fraction of the abundant isotope
+                                  r_air, r_sea, &  ! isotopic ratios in atmosphere and ocean
+                                  c_surf           ! surface water concentration of the abundant isotope (mol / m**3)
+
+      iso_flux = transfer_vel(which_gas, temp_c, u_10, v_10) * &
+                 solub(which_gas, temp_c, sal) * p_atm / 1.01325e5 * x_gas * &
+                 (r_air - r_sea) * (1. - f_ice) / c_surf
       return
     end function iso_flux
 
-    function gas_flux(which_gas, temp_c, sal, u_10, v_10, f_ice, p_air, x_gas, c_surf)
+    function gas_flux(which_gas, temp_c, sal, u_10, v_10, f_ice, p_atm, x_gas, c_surf)
 !     Computes air-sea exchange gas fluxes in m / s, positive values mean oceanic uptake.
       implicit none
 
@@ -425,16 +421,70 @@ MODULE bgc
       real(kind=8), intent(in) :: temp_c, sal, & ! SST (deg C) and SSS ("PSU" or permil)
                                   u_10, v_10,  & ! wind speed at 10 m height (m / s)
                                   f_ice, &       ! sea-ice fractional coverage
-                                  p_air, &       ! total atmospheric pressure (Pa)
+                                  p_atm, &       ! total atmospheric pressure (Pa)
                                   x_gas, &       ! atmospheric mole fraction 
                                   c_surf         ! marine surface water concentration (mol / m**3)
 !     Internal variables
       real(kind=8) :: c_sat                      ! marine saturation concentration (mol / m**3)
-      c_sat = solub(which_gas, temp_c, sal) * partial_press(x_gas, p_air, temp_c, sal) * x_gas
+!!    c_sat = solub_dry(which_gas, temp_c, sal) * partial_press(x_gas, p_air, temp_c, sal) * x_gas
+      c_sat = solub(which_gas, temp_c, sal) * p_atm / 1.01325e5 * x_gas
       gas_flux = transfer_vel(which_gas, temp_c, u_10, v_10) * (c_sat - c_surf) * (1. - f_ice)
 
       return
     end function gas_flux
+
+    function solub(which_gas, temp_c, sal)
+!     Computes the solubility of trace gases in seawater.
+!     This parametrization includes the effect of water vapor.
+      implicit none
+      real(kind=8) :: solub                  ! solubility ((p)mol / (m**3 * atm))
+!     Input parameters
+      character(len=3), intent(in) :: which_gas  ! tracer name
+      real(kind=8), intent(in) :: temp_c, &      ! temperature (deg C)
+                                  sal            ! salinity ("PSU" or permil)
+      real(kind=8) :: a1, a2, a3, a4, &          ! polynomial coefficients of the
+                      b1, b2, b3, b4, c1         ! solubility function
+                      temp_k100, &               ! water temperature in K / 100
+                      per_m3                     ! factor to convert from 1 / L or 1 / kg to 1 / m**3
+
+      temp_k100 = (temp_c + 273.15) * 0.01
+
+      select case (which_gas)
+      case ("co2")
+!       CO2 in mol / (L * atm) (Weiss & Price 1985, doi:10.1016/0304-4203(80)90024-9, Table VI) 
+        a1 = -160.7333; a2 = 215.4152;   a3 = 89.8920;   a4 = -1.47759
+        b1 =  0.029941; b2 = -0.027455;  b3 = 0.0053407
+        c1 =  0.
+        per_m3 = 1000.
+      case ("f12") 
+!       CFC-12 in mol / (L * atm) (Warner & Weiss 1985, doi:10.1016/0198-0149(85)90099-8, Table 5)
+        a1 = -218.0971; a2 = 298.9702;   a3 = 113.8049;  a4 = -1.39165
+        b1 = -0.143566; b2 = 0.091015;   b3 = -0.0153924
+        c1 =  0.
+        per_m3 = 1.e15 ! yields solubility in pmol / m**3
+      case ("sf6") 
+!       SF6 in mol / (L * atm) (Bullister et al. 2002, doi:10.1016/S0967-0637(01)00051-6, Table 3)
+        a1 = -80.0343;  a2 = 117.232;    a3 = 29.5817;   a4 = 0.
+        b1 = 0.0335183; b2 = -0.0373942; b3 = 0.00774862
+        c1 = 0.
+        per_m3 = 1.e15 ! yields solubility in pmol / m**3
+      case("arg")
+!       Ar-39 in mol / kg (Jenkins et al. 2019, doi:10.1016/j.marchem.2019.03.007, Table 4)
+        a1 = -227.4607; a2 = 305.4347;   a3 = 180.5278;  a4 = 27.99450
+        b1 = -0.066942; b2 = 0.037201;   b3 = -0.0056364
+        c1 = -5.30e-6
+        per_m3 = 1024.5  ! kg / m**3 in the global mean at the sea surface
+      end select
+
+      solub = exp(       a1 + a2 / temp_k100 + a3 * log(temp_k100) + a4 * temp_k100 **2 + & 
+                  sal * (b1 + b2 * temp_k100 + b3 * temp_k100**2   + c1 * sal))
+      solub = solub * per_m3
+
+
+      return
+    end function solub
+
+
 
 
     function partial_press(x_gas, p_air, temp_c, sal)
@@ -461,10 +511,11 @@ MODULE bgc
     end function partial_press
 
 
-    function solub(which_gas, temp_c, sal)
+    function solub_dry(which_gas, temp_c, sal)
 !     Computes the solubility of trace gases in seawater.
+!     This parametrization needs to consider the partial pressure of water vapor separately.
       implicit none
-      real(kind=8) :: solub                      ! solubility (mol / (m**3 * atm))
+      real(kind=8) :: solub_dry                  ! solubility (mol / (m**3 * atm))
 !     Input parameters
       character(len=3), intent(in) :: which_gas  ! tracer name
       real(kind=8), intent(in) :: temp_c, &      ! temperature (deg C)
@@ -508,7 +559,7 @@ MODULE bgc
 
 
       return
-    end function solub
+    end function solub_dry
 
 
     function sc_660(which_gas, temp_c)
