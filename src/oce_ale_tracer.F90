@@ -1239,7 +1239,7 @@ FUNCTION bc_surface(n, id)
       if ((r14c_a /= r14c_sh) .and. (y_abc <- 30)) r14c_a = r14c_sh
       if ((r14c_a /= r14c_tz) .and. (y_abc <= 30) .and. (y_abc >= -30))  r14c_a = r14c_tz
 
-      bc_surface = dt * iso_flux(tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
+      bc_surface = dt * iso_flux("co2", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
                                  Pair(n), xco2_a, r14c_a, tr_arr(1,n,3), dic_0)
 
     CASE (12) 
@@ -1269,11 +1269,9 @@ FUNCTION bc_surface(n, id)
                                  Pair(n), xf12_a, tr_arr(1,n,5)) !! CHECK tr_arr(1,n,index)
 
     CASE (39) 
-!     Apply boundary conditions to tracer ID=39 (Argon-39)
-!!      UNDER CONSTRUCTION
-!!      bc_surface = dt * iso_flux()
-!!      bc_surface = dt * gas_flux("arg", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
-!!                                 Pair(n), xarg_a, tr_arr(1,n,6))
+!     Apply boundary conditions to tracer ID=39 (the fractionationation-corrected 39Ar/40Ar ratio)
+      bc_surface = dt * iso_flux("arg", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
+                                 Pair(n), xarg_a, r39ar_a, tr_arr(1,n,6), arg_0)
 
     CASE DEFAULT
       if (mype==0) then
