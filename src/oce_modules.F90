@@ -363,6 +363,8 @@ MODULE bgc
   real(kind=8) :: xsf6_a  = 0.00e-12, &  ! value passed in air-sea flux calculation
                   xsf6_nh = 0.00e-12, &  ! Northern Hemisphere
                   xsf6_sh = 0.00e-12     ! Southern Hemisphere
+! Atmospheric Argon concentration (mole fraction in dry air)
+  real(kind=8) :: xarg_a  = 9.34e-3      ! value passed in air-sea flux calculation
 ! Global-mean concentrations of DIC and Argon in the mixed layer (mol / m**3)
   real(kind=8) :: dic_0 = 2.00, &        ! GLODAPv2, 0-50 m: TCO2 ~ 2050 umol / kg
                   arg_0 = 0.01           ! Hamme et al. 2019, doi:10.1146/annurev-marine-121916-063604
@@ -387,7 +389,7 @@ MODULE bgc
   contains
 
 
-    function iso_flux(temp_c, sal, u_10, v_10, f_ice, p_atm, x_gas, r_air, r_sea, c_surf)
+    function iso_flux(which_gas, temp_c, sal, u_10, v_10, f_ice, p_atm, x_gas, r_air, r_sea, c_surf)
 !     Calculate isotopic air-sea exchange fluxes in m / s assuming local solubility equilibrium
 !     for the abundant isotopologue (e.g. 12CO2). Positive values mean oceanic uptake.
       implicit none
@@ -395,7 +397,6 @@ MODULE bgc
       real(kind=8) :: iso_flux
 !     Input parameters
       character(len=3), intent(in) :: which_gas  ! trace gas name
-      real(kind=8), intent(in) :: temp_c, sal, u_10, v_10, f_ice, p_air, x_gas, r_air, r_sea, c_surf
 
       real(kind=8), intent(in) :: temp_c, sal, &   ! SST (deg C) and SSS ("PSU" or permil)
                                   u_10, v_10,  &   ! wind speed at 10 m height (m / s)
@@ -443,7 +444,7 @@ MODULE bgc
       real(kind=8), intent(in) :: temp_c, &      ! temperature (deg C)
                                   sal            ! salinity ("PSU" or permil)
       real(kind=8) :: a1, a2, a3, a4, &          ! polynomial coefficients of the
-                      b1, b2, b3, b4, c1         ! solubility function
+                      b1, b2, b3, b4, c1, &      ! solubility function
                       temp_k100, &               ! water temperature in K / 100
                       per_m3                     ! factor to convert from 1 / L or 1 / kg to 1 / m**3
 
@@ -479,7 +480,6 @@ MODULE bgc
       solub = exp(       a1 + a2 / temp_k100 + a3 * log(temp_k100) + a4 * temp_k100 **2 + & 
                   sal * (b1 + b2 * temp_k100 + b3 * temp_k100**2   + c1 * sal))
       solub = solub * per_m3
-
 
       return
     end function solub
@@ -553,9 +553,9 @@ MODULE bgc
 !       per_m3 =  
       end select
 
-      solub = exp(       a1 + a2 / temp_k100 + a3 * log(temp_k100) + & 
+      solub_dry = exp(       a1 + a2 / temp_k100 + a3 * log(temp_k100) + & 
                   sal * (b1 - b2 * temp_k100 + b3 * temp_k100**2))  ! in mol / L
-      solub = solub * per_m3
+      solub_dry = solub_dry * per_m3
 
 
       return
