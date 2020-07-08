@@ -1942,7 +1942,7 @@ subroutine oce_timestep_ale(n)
     use io_RESTART !PS
     use i_ARRAYS !PS
     use o_mixing_KPP_mod
-    use bgc, only: online, offline
+    use transit, only: online, offline
     
     IMPLICIT NONE
     real(kind=8)      :: t0,t1, t2, t30, t3, t4, t5, t6, t7, t8, t9, t10

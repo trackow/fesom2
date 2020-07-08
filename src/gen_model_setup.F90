@@ -18,7 +18,7 @@ subroutine read_namelist
   use g_config
   use g_clock, only: timenew, daynew, yearnew
   use g_ic3d  
-  use bgc, only : bgc_param, r14c_a, xco2_a, xf12_a, xsf6_a
+  use transit, only : transit_param, r14c_a, xco2_a, xf12_a, xsf6_a
   implicit none
 
   character(len=100)   :: nmlfile
@@ -96,9 +96,9 @@ subroutine read_namelist
   close (20)
   endif
 
-  nmlfile ='namelist.bgc'    ! name of bgc tracers namelist file
+  nmlfile ='namelist.transit'    ! name of transient tracers namelist file
   open (20,file=nmlfile)
-  read (20,NML=bgc_param)
+  read (20,NML=transit_param)
   close (20)
   if(mype==0) print *, "r14c_a, xco2_a, xf12_a, xsf6_a = ", r14c_a, xco2_a, xf12_a, xsf6_a
 

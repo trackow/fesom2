@@ -12,7 +12,7 @@ module io_MEANDATA
   use diagnostics
   use i_PARAM, only: whichEVP
 
-  use bgc, only: offline, online
+  use transit, only: offline, online
 
   use, intrinsic :: ISO_FORTRAN_ENV
 
@@ -244,7 +244,7 @@ else
      call def_stream(nod2D,  myDim_nod2D,  'beta_EVP',  'beta in EVP',  'n/a', beta_evp_array,   1, 'd', i_real4)
   end if
 
-end if ! BGC offline .and. online
+end if ! transit offline .and. online
 
 end subroutine ini_mean_io
 !

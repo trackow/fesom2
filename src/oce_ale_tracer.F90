@@ -9,8 +9,8 @@ subroutine solve_tracers_ale
 	use o_mesh
 	use g_comm_auto
 	use o_tracers
-! include variables for bgc tracer simulations
-	use bgc, only: decay14, decay39 ! decay constants of 14C and 39Ar
+! include variables for transient tracer simulations
+	use transit, only: decay14, decay39 ! decay constants of 14C and 39Ar
 	use g_config, only: dt          ! needed to calculate radioactive decay
 
 	implicit none
@@ -1206,7 +1206,7 @@ FUNCTION bc_surface(n, id)
   USE g_forcing_arrays
   USE g_PARSUP, only: mype, par_ex
   USE g_config
-  use bgc
+  use transit
   use o_mesh ! MB needed for transient tracer simulations
   use i_arrays, only: a_ice
   implicit none

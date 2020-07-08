@@ -6,7 +6,7 @@ MODULE io_RESTART
   use o_mesh
   use o_arrays
   use i_arrays
-  use bgc, only: offline
+  use transit, only: offline
   implicit none
 #include "netcdf.inc"
 !

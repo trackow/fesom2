@@ -21,7 +21,7 @@ use io_RESTART
 use io_MEANDATA
 use io_mesh_info
 use diagnostics
-use bgc, only: offline, online
+use transit, only: offline, online
 #if defined (__oasis)
 use cpl_driver
 #endif
@@ -88,9 +88,9 @@ real(kind=real32) :: runtime_alltimesteps
     call cpl_oasis3mct_define_unstr
     if(mype==0)  write(*,*) 'FESOM ---->     cpl_oasis3mct_define_unstr nsend, nrecv:',nsend, nrecv
 #endif
-    ! Log off-line simulation modes for BGC tracers
-    if (mype==0 .and. offline .and. (.not. online))  print *, '*** BGC: Tracers will be simulated off-line ***'
-    if (mype==0 .and. offline .and. online) print *, '*** BGC: Diagnosing dynamic fields for off-line simulations ***'
+    ! Log off-line simulation modes for transient tracers
+    if (mype==0 .and. offline .and. (.not. online))  print *, '*** Transient tracers will be simulated off-line ***'
+    if (mype==0 .and. offline .and. online) print *, '*** Diagnosing dynamic fields for off-line simulations of transient tracers ***'
     
     call clock_newyear                        ! check if it is a new year
     if (mype==0) t6=MPI_Wtime()
