@@ -338,7 +338,7 @@ END MODULE o_ARRAYS
 
 
 !==========================================================
-MODULE bgc
+MODULE transit
 ! Parameters, variables and functions for transient tracer simulations.
 
   implicit none
@@ -354,15 +354,21 @@ MODULE bgc
 ! Atmospheric CO2 concentration
 ! CMIP6 & OMIP-BGC: xCO2_a = 284.32 ppm for 1700-1850 CE
 ! PMIP4:            xCO2_a = 190.00 ppm for 21 kcal BP
-  real(kind=8) :: xCO2_a = 284.23e-6  ! mole fraction in dry air
-! Atmospheric CFC-12 concentration (mole fraction in dry air)
-  real(kind=8) :: xf12_a  = 0.00e-12, &  ! value passed in air-sea flux calculation
-                  xf12_nh = 0.00e-12, &  ! Northern Hemisphere
-                  xf12_sh = 0.00e-12     ! Southern Hemisphere
-! Atmospheric SF6 concentration (mole fraction in dry air)
-  real(kind=8) :: xsf6_a  = 0.00e-12, &  ! value passed in air-sea flux calculation
-                  xsf6_nh = 0.00e-12, &  ! Northern Hemisphere
-                  xsf6_sh = 0.00e-12     ! Southern Hemisphere
+  real(kind=8) :: xCO2_a = 284.32e-6  ! mole fraction in dry air
+! Atmospheric concentrations of CFC-12 and SF6 (mole fraction in dry air)
+  real(kind=8) :: xf12_a  = 0.00e-12, &  ! CFC-12, value passed in air-sea flux calculation
+                  xf12_nh = 0.00e-12, &  ! CFC-12, Northern Hemisphere
+                  xf12_sh = 0.00e-12, &  ! CFC-12, Southern Hemisphere
+                  xsf6_a  = 0.00e-12, &  ! SF6, value passed in air-sea flux calculation
+                  xsf6_nh = 0.00e-12, &  ! SF6, Northern Hemisphere
+                  xsf6_sh = 0.00e-12     ! SF6, Southern Hemisphere
+! Atmospheric concentration trends of atmospheric CFC-12 and SF6 (mole fraction in dry air per year)
+  real(kind=8) :: d_xf12_a  = 0.00e-12, &  ! CFC-12, value passed in air-sea flux calculation
+                  d_xf12_nh = 0.00e-12, &  ! CFC-12, Northern Hemisphere
+                  d_xf12_sh = 0.00e-12, &  ! CFC-12, Southern Hemisphere
+                  d_xsf6_a  = 0.00e-12, &  ! SF6, value passed in air-sea flux calculation
+                  d_xsf6_nh = 0.00e-12, &  ! SF6, Northern Hemisphere
+                  d_xsf6_sh = 0.00e-12     ! SF6, Southern Hemisphere
 ! Atmospheric Argon concentration (mole fraction in dry air)
   real(kind=8) :: xarg_a  = 9.34e-3      ! value passed in air-sea flux calculation
 ! Global-mean concentrations of DIC and Argon in the mixed layer (mol / m**3)
@@ -379,11 +385,17 @@ MODULE bgc
 ! logical :: offline = .true., online = .false. ! enable off-line simulations
   
 ! Namelist to modify default parameter settings
-  namelist / bgc_param / r14c_a, r14c_nh, r14c_tz, r14c_sh, xco2_a, &  ! atmospheric values for Delta14C
-                         xf12_a, xf12_nh, xf12_sh, &                   ! atmospheric values for CFC-12
-                         xsf6_a, xsf6_nh, xsf6_sh, &                   ! atmospheric values for SF6
-                         dic_0, decay14, &                             ! both are needed for Delta14C
-                         offline, online
+  namelist / transit_param / r14c_a, r14c_nh, r14c_tz, r14c_sh, &  ! atmospheric F14C
+                             r39ar_a, &                            ! atmospheric 39Ar/Ar ratio
+                             xarg_a, &                             ! atmospheric mole fraction of Argon
+                             xco2_a, &                             ! atmospheric mole fraction of CO2
+                             xf12_a, xf12_nh, xf12_sh, &           ! atmospheric mole fractions of CFC-12
+                             xsf6_a, xsf6_nh, xsf6_sh, &           ! atmospheric mole fractions of SF6
+                             d_xf12_nh, d_xf12_sh, &               ! atmospheric trends of CFC-12
+                             d_xsf6_nh, d_xsf6_sh, &               ! atmospheric trends of SF6
+                             dic_0, arg_0, &                       ! mixed layer values of DIC and Argon
+                             decay14, decay39, &                   ! decay constants of 14C and 39Ar
+                             offline, online                       ! enable/disable offline simulations
 
 
   contains
@@ -609,4 +621,4 @@ MODULE bgc
       return
     end function transfer_vel
 
-END MODULE bgc
+END MODULE transit
