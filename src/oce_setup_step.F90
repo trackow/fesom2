@@ -331,14 +331,30 @@ USE g_ic3d
             write (id_string, "(I3)") id
             write(*,*) 'initializing '//trim(i_string)//'th tracer with ID='//trim(id_string)
          end if
-       CASE (14)        ! initialize tracer ID=14, fractionation-corrected 14C/12C
-  !      this is just a dummy because 14C/12C is initialized calling do_ic3d
+       CASE (14)        ! initialize tracer ID=14, fractionation-corrected 14C/C
+  !      this is just a dummy because 14C/C is initialized calling do_ic3d
+       CASE (39)        ! initialize tracer ID=39, fractionation-corrected 39Ar/Ar
+         tr_arr(:,:,i) = 0.5
+!         tr_arr(1,:,i) = 1.0
+         if (mype==0) then
+            write (i_string,  "(I3)") i
+            write (id_string, "(I3)") id
+            write(*,*) 'initializing '//trim(i_string)//'th tracer with ID='//trim(id_string)
+         end if
        CASE (12)        ! initialize tracer ID=12, CFC-12
-  !      this is just a dummy because CFC-12 is initialized calling do_ic3d
+         tr_arr(:,:,i) = 1.e-10
+         if (mype==0) then
+            write (i_string,  "(I3)") i
+            write (id_string, "(I3)") id
+            write(*,*) 'initializing '//trim(i_string)//'th tracer with ID='//trim(id_string)
+         end if
        CASE (6)         ! initialize tracer ID=6, SF6
-  !      this is just a dummy because SF6 is initialized calling do_ic3d
-       CASE (39)        ! initialize tracer ID=39, fractionation-corrected 39Ar/40Ar
-  !      this is just a dummy because 39Ar/40Ar is initialized calling do_ic3d
+         tr_arr(:,:,i) = 1.e-10
+         if (mype==0) then
+            write (i_string,  "(I3)") i
+            write (id_string, "(I3)") id
+            write(*,*) 'initializing '//trim(i_string)//'th tracer with ID='//trim(id_string)
+         end if
        CASE (3)
          if (mype==0) then
             write (i_string,  "(I3)") i
