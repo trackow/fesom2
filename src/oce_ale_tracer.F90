@@ -1219,7 +1219,8 @@ FUNCTION bc_surface(n, id)
   !  --> is_nonlinfs=0.0 for linfs
 
   y_abc = geo_coord_nod2D(2,n) / rad  ! latitude of atmospheric tracer input
-
+  yy_nh = (10. - y_abc) * 0.05        ! interpolation weight for tropical tracer values
+    
   SELECT CASE (id)
     CASE (0)
       bc_surface=-dt*(heat_flux(n)/vcpw + tr_arr(1,n,1)*water_flux(n)*is_nonlinfs)
@@ -1231,47 +1232,61 @@ FUNCTION bc_surface(n, id)
     CASE (101) ! apply boundary conditions to tracer ID=101
     bc_surface= dt*(prec_rain(n))! - real_salt_flux(n)*is_nonlinfs)
 
-    CASE (14)
-!     Apply boundary conditions to tracer ID=14 (the fractionation-corrected 14C/12C ratio)
-!     iso_flux is the local isotopic 14CO2 air-sea exchange flux (in m / s) 
-!     for homogenous DIC in the mixed layer
-      if ((r14c_a /= r14c_nh) .and. (y_abc > 30))  r14c_a = r14c_nh
-      if ((r14c_a /= r14c_sh) .and. (y_abc <- 30)) r14c_a = r14c_sh
-      if ((r14c_a /= r14c_tz) .and. (y_abc <= 30) .and. (y_abc >= -30))  r14c_a = r14c_tz
-
+    CASE (14)  ! Apply boundary conditions to tracer ID=14 (fractionation-corrected 14C/C)
+!     Select atmospheric 14C input values corresponding to the latitude
+      if (y_abc > 30.)  then       ! Northern Hemisphere
+         r14c_a = r14c_nh 
+      else if (y_abc <- 30.) then  ! Southern Hemisphere
+         r14c_a = r14c_sh
+      else                         ! Tropical zone
+         r14c_a = r14c_tz
+      end if
+!     Local isotopic 14CO2/CO2 air-sea exchange flux (in m / s):
       bc_surface = dt * iso_flux("co2", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
                                  Pair(n), xco2_a, r14c_a, tr_arr(1,n,3), dic_0)
 
-    CASE (12) 
-!     Apply boundary conditions of tracer ID=12 (CFC-12)
-!     flux_xf12 is the local CFC-12 air-sea exchange flux (in m / s)
-      if ((xf12_a /= xf12_nh) .and. (y_abc > 30))  xf12_a = xf12_nh
-      if ((xf12_a /= xf12_sh) .and. (y_abc <- 30)) xf12_a = xf12_sh
-!!      UNDER CONSTRUCTION
-!!      if ((xf12_a /= xf12_nh) .and. (y_abc <= 30) .and. (y_abc >= -30))  then
-!!         xf12_a = ! interpolate values
-!!      end if
-
-      bc_surface = dt * gas_flux("f12", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
-                                 Pair(n), xf12_a, tr_arr(1,n,4))  !! CHECK tr_arr(1,n,index)
-
-    CASE (6) 
-!     Apply boundary conditions to tracer ID=6 (SF6)
-!     flux_xf12 is the local CFC-12 air-sea exchange flux (in m / s)
-      if ((xsf6_a /= xsf6_nh) .and. (y_abc > 30))  xsf6_a = xsf6_nh
-      if ((xsf6_a /= xsf6_sh) .and. (y_abc <- 30)) xsf6_a = xsf6_sh
-!!      UNDER CONSTRUCTION
-!!      if ((xsf6_a /= xsf6_nh) .and. (y_abc <= 30) .and. (y_abc >= -30))  then
-!!         xsf6_a = ! interpolate values
-!!      end if
-
-      bc_surface = dt * gas_flux("sf6", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
-                                 Pair(n), xf12_a, tr_arr(1,n,5)) !! CHECK tr_arr(1,n,index)
-
-    CASE (39) 
-!     Apply boundary conditions to tracer ID=39 (the fractionationation-corrected 39Ar/40Ar ratio)
+    CASE (39) ! Apply boundary conditions to tracer ID=39 (fractionationation-corrected 39Ar/Ar)
+!     Local isotopic 39Ar/Ar air-sea exchange flux (in m / s):
       bc_surface = dt * iso_flux("arg", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
-                                 Pair(n), xarg_a, r39ar_a, tr_arr(1,n,6), arg_0)
+                                 Pair(n), xarg_a, r39ar_a, tr_arr(1,n,4), arg_0)
+
+    CASE (12) ! Apply boundary conditions of tracer ID=12 (CFC-12)
+!     Select atmospheric CFC-12 input values corresponding to the latitude
+      if (y_abc > 10.)  then       ! Northern Hemisphere
+         xf12_a = xf12_nh
+         f12t_a = f12t_nh
+      else if (y_abc <- 10.) then  ! Southern Hemisphere
+         xf12_a = xf12_sh
+         f12t_a = f12t_sh
+      else                         ! Tropical zone, interpolate between NH and SH
+         xf12_a = (1 - yy_nh) * xf12_nh + yy_nh * xf12_sh
+         f12t_a = (1 - yy_nh) * f12t_nh + yy_nh * f12t_sh
+      end if
+!!    UNDER CONSTRUCTION / 2DO: Interpolate annual to monthly?? values
+!!    xf12_a = xf12_a + dt * f12t_a / sec_per_year ??
+
+!     Local air-sea exchange gas flux of CFC-12 (in m / s):
+      bc_surface = dt * gas_flux("f12", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
+                                 Pair(n), xf12_a, tr_arr(1,n,5))
+
+    CASE (6) ! Apply boundary conditions to tracer ID=6 (SF6)
+!     Select atmospheric SF6 input values corresponding to the latitude
+      if (y_abc > 10.)  then       ! Northern Hemisphere
+         xsf6_a = xsf6_nh
+         sf6t_a = sf6t_nh
+      else if (y_abc <- 10.) then  ! Southern Hemisphere
+         xsf6_a = xsf6_sh
+         sf6t_a = sf6t_sh
+      else                         ! Tropical zone, interpolate between NH and SH
+         xsf6_a = (1 - yy_nh) * xsf6_nh + yy_nh * xsf6_sh
+         sf6t_a = (1 - yy_nh) * sf6t_nh + yy_nh * sf6t_sh
+      end if
+!!    UNDER CONSTRUCTION / 2DO: Interpolate annual to monthly?? values
+!!    xsf6_a = xsf6_a + dt * sf6t_a / sec_per_year ??
+
+!     Local air-sea exchange gas flux of SF6 (in m / s):
+      bc_surface = dt * gas_flux("sf6", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
+                                 Pair(n), xsf6_a, tr_arr(1,n,6))
 
     CASE DEFAULT
       if (mype==0) then
