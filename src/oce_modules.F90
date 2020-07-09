@@ -345,30 +345,30 @@ MODULE transit
   save
 
 ! Normalized and fractionation-corrected atmospheric 14CO2 / 12CO2 ratios
-  real(kind=8) :: r14c_a  = 1.0, & ! Global average and/or value in air-sea flux calculation
+  real(kind=8) :: r14c_a  = 1.0, & ! Value passed in air-sea flux calculation
                   r14c_nh = 1.0, & ! Northern Hemisphere
                   r14c_tz = 1.0, & ! Tropics
                   r14c_sh = 1.0    ! Southern Hemisphere
 ! Normalized and fractionation-corrected atmospheric 39Ar/40Ar ratio
   real(kind=8) :: r39ar_a  = 1.0   ! Global average and/or value in air-sea flux calculation
-! Atmospheric CO2 concentration
+! Atmospheric CO2 concentration (mole fraction in dry air)
 ! CMIP6 & OMIP-BGC: xCO2_a = 284.32 ppm for 1700-1850 CE
 ! PMIP4:            xCO2_a = 190.00 ppm for 21 kcal BP
-  real(kind=8) :: xCO2_a = 284.32e-6  ! mole fraction in dry air
+  real(kind=8) :: xCO2_a = 284.32e-6
 ! Atmospheric concentrations of CFC-12 and SF6 (mole fraction in dry air)
-  real(kind=8) :: xf12_a  = 0.00e-12, &  ! CFC-12, value passed in air-sea flux calculation
+  real(kind=8) :: xf12_a  = 0.00e-12, &  ! CFC-12, value passed in air-sea flux calculations
                   xf12_nh = 0.00e-12, &  ! CFC-12, Northern Hemisphere
                   xf12_sh = 0.00e-12, &  ! CFC-12, Southern Hemisphere
-                  xsf6_a  = 0.00e-12, &  ! SF6, value passed in air-sea flux calculation
+                  xsf6_a  = 0.00e-12, &  ! SF6, value passed in air-sea flux calculations
                   xsf6_nh = 0.00e-12, &  ! SF6, Northern Hemisphere
                   xsf6_sh = 0.00e-12     ! SF6, Southern Hemisphere
 ! Atmospheric concentration trends of atmospheric CFC-12 and SF6 (mole fraction in dry air per year)
-  real(kind=8) :: d_xf12_a  = 0.00e-12, &  ! CFC-12, value passed in air-sea flux calculation
-                  d_xf12_nh = 0.00e-12, &  ! CFC-12, Northern Hemisphere
-                  d_xf12_sh = 0.00e-12, &  ! CFC-12, Southern Hemisphere
-                  d_xsf6_a  = 0.00e-12, &  ! SF6, value passed in air-sea flux calculation
-                  d_xsf6_nh = 0.00e-12, &  ! SF6, Northern Hemisphere
-                  d_xsf6_sh = 0.00e-12     ! SF6, Southern Hemisphere
+  real(kind=8) :: f12t_a  = 0.00e-12, &  ! CFC-12, value passed in air-sea flux calculations
+                  f12t_nh = 0.00e-12, &  ! CFC-12, Northern Hemisphere
+                  f12t_sh = 0.00e-12, &  ! CFC-12, Southern Hemisphere
+                  sf6t_a  = 0.00e-12, &  ! SF6, value passed in air-sea flux calculations
+                  sf6t_nh = 0.00e-12, &  ! SF6, Northern Hemisphere
+                  sf6t_sh = 0.00e-12     ! SF6, Southern Hemisphere
 ! Atmospheric Argon concentration (mole fraction in dry air)
   real(kind=8) :: xarg_a  = 9.34e-3      ! value passed in air-sea flux calculation
 ! Global-mean concentrations of DIC and Argon in the mixed layer (mol / m**3)
@@ -377,25 +377,25 @@ MODULE transit
 ! Radioactive decay constants (1 / s; default values assume that 1 year = 365.00 days)
   real(kind=8) :: decay14 = 3.8561e-12 , & ! 14C; t1/2 = 5700 a following OMIP-BGC
                   decay39 = 8.1708e-11     ! 39Ar; t1/2 = 269 a
-! Latitude of/for atmospheric boundary conditions
-  real(kind=8) :: y_abc
+! Latitude of atmospheric boundary conditions and latitudinal interpolation weight
+  real(kind=8) :: y_abc, yy_nh
 ! Switches for off-line simulations
   logical ::  offline = .false., online = .true. ! on-line simulations (default setup)
 ! logical :: offline = .true., online = .true.  ! diagnose dynamic fields to be used in off-line simulations
 ! logical :: offline = .true., online = .false. ! enable off-line simulations
   
 ! Namelist to modify default parameter settings
-  namelist / transit_param / r14c_a, r14c_nh, r14c_tz, r14c_sh, &  ! atmospheric F14C
-                             r39ar_a, &                            ! atmospheric 39Ar/Ar ratio
-                             xarg_a, &                             ! atmospheric mole fraction of Argon
-                             xco2_a, &                             ! atmospheric mole fraction of CO2
-                             xf12_a, xf12_nh, xf12_sh, &           ! atmospheric mole fractions of CFC-12
-                             xsf6_a, xsf6_nh, xsf6_sh, &           ! atmospheric mole fractions of SF6
-                             d_xf12_nh, d_xf12_sh, &               ! atmospheric trends of CFC-12
-                             d_xsf6_nh, d_xsf6_sh, &               ! atmospheric trends of SF6
-                             dic_0, arg_0, &                       ! mixed layer values of DIC and Argon
-                             decay14, decay39, &                   ! decay constants of 14C and 39Ar
-                             offline, online                       ! enable/disable offline simulations
+  namelist / transit_param / r14c_nh, r14c_tz, r14c_sh, &  ! atmospheric F14C
+                             r39ar_a, &                    ! atmospheric 39Ar/Ar ratio
+                             xarg_a, &                     ! atmospheric mole fraction of Argon
+                             xco2_a, &                     ! atmospheric mole fraction of CO2
+                             xf12_nh, xf12_sh, &           ! atmospheric mole fractions of CFC-12
+                             xsf6_nh, xsf6_sh, &           ! atmospheric mole fractions of SF6
+                             f12t_nh, f12t_sh, &           ! atmospheric trends of CFC-12
+                             sf6t_nh, sf6t_sh, &           ! atmospheric trends of SF6
+                             dic_0, arg_0, &               ! mixed layer values of DIC and Argon
+                             decay14, decay39, &           ! decay constants of 14C and 39Ar
+                             offline, online               ! enable/disable offline simulations
 
 
   contains
@@ -424,6 +424,7 @@ MODULE transit
       return
     end function iso_flux
 
+
     function gas_flux(which_gas, temp_c, sal, u_10, v_10, f_ice, p_atm, x_gas, c_surf)
 !     Computes air-sea exchange gas fluxes in m / s, positive values mean oceanic uptake.
       implicit none
@@ -445,6 +446,7 @@ MODULE transit
 
       return
     end function gas_flux
+
 
     function solub(which_gas, temp_c, sal)
 !     Computes the solubility of trace gases in seawater.
@@ -483,7 +485,7 @@ MODULE transit
         per_m3 = 1.e15 ! yields solubility in pmol / m**3
       case("arg")
 !       Ar-39 in mol / kg (Jenkins et al. 2019, doi:10.1016/j.marchem.2019.03.007, Table 4)
-        a1 = -227.4607; a2 = 305.4347;   a3 = 180.5278;  a4 = 27.99450
+        a1 = -227.4607; a2 = 305.4347;   a3 = 180.5278;  a4 = -27.99450
         b1 = -0.066942; b2 = 0.037201;   b3 = -0.0056364
         c1 = -5.30e-6
         per_m3 = 1024.5  ! kg / m**3 in the global mean at the sea surface
@@ -495,83 +497,6 @@ MODULE transit
 
       return
     end function solub
-
-
-
-
-    function partial_press(x_gas, p_air, temp_c, sal)
-!     Converts the mole fraction of a gas to its partial pressure in marine air.
-      implicit none
-
-      real(kind=8) :: partial_press
-!     Input parameters
-      real(kind=8), intent(in) :: x_gas, &       ! mole fraction of the gas to be converted
-                                  p_air, &       ! total atmospheric pressure in Pa
-                                  temp_c, sal    ! temperature (deg C) and salinity ("PSU" or permil)
-!     Internal variables
-      real(kind=8) :: p_h2o, &                   ! vapor pressure of sea water in atm
-                      temp_k100                  ! water temperature in K / 100
-
-      temp_k100 = (temp_c + 273.15) * 0.01
-
-!     Vapor pressure over seawater in atm (Weiss & Price 1980, eq. 10)
-      p_h2o = exp(24.4543 - 67.4509 / temp_k100 - 4.8489 * log(temp_k100) - 0.000544 * sal)
-!     Partial pressure in moist air in atm, 1 atm = 101325 Pa
-      partial_press = x_gas  * (1. - p_h2o) * p_air / 1.01325e5 
-
-      return 
-    end function partial_press
-
-
-    function solub_dry(which_gas, temp_c, sal)
-!     Computes the solubility of trace gases in seawater.
-!     This parametrization needs to consider the partial pressure of water vapor separately.
-      implicit none
-      real(kind=8) :: solub_dry                  ! solubility (mol / (m**3 * atm))
-!     Input parameters
-      character(len=3), intent(in) :: which_gas  ! tracer name
-      real(kind=8), intent(in) :: temp_c, &      ! temperature (deg C)
-                                  sal            ! salinity ("PSU" or permil)
-      real(kind=8) :: a1, a2, a3, b1, b2, b3, &  ! polynomial coefficients of the solubility function 
-                      temp_k100, &               ! water temperature in K / 100
-                      per_m3 = 1000.             ! factor to convert from 1 / L to 1 / m**3
-
-      temp_k100 = (temp_c + 273.15) * 0.01
-
-      select case (which_gas)
-      case ("co2")
-!       CO2 solubility according to Weiss, 1974 (eq. 12 and tab. I). 
-!       We follow the OMPIC-BCG recommendations for "abiotic" carbon tracers 
-!       (Orr et al. 2017, eq. 17-18 and tab. 3) to use this solubility function
-!       instead of the one by Weiss & Price (1985). 
-        a1 = -58.0931 ; a2 =  90.5069;  a3 = 22.2940
-        b1 =  0.027766; b2 = -0.025888; b3 = 0.0050578
-!!        solub = exp(-58.0931 + 90.5069 / temp_k100 + 22.2940 * log(temp_k100) + & 
-!!                    sal * (0.027766 - 0.025888 * temp_k100 + 0.0050578 * temp_k100**2)) * 1000
-      case ("f12") 
-!       CFC-12 !! CHECK, ADD REF
-        a1 = -122.3246; a2 = 182.5306; a3 = 50.5898
-        b1 = -0.145633; b2 = 0.092509; b3 = -0.0156627 
-        per_m3 = per_m3 * 1e12 ! -> solubility in pmol / m**3
-      case ("sf6") 
-!       SF6 !! CHECK, ADD REF
-        a1 = -96.5975; a2 = 139.883; a3 = 37.8193
-        b1 =  0.0310693; b2 = -0.0356385; b3 = 0.00743254
-        per_m3 = per_m3 * 1e12 ! -> solubility in pmol / m**3
-      case("arg")
-!       Ar-39, Bunsen coefficient -> convert to K' <- UNDER CONSTRUCTION
-        a1 = -55.6578; a2 = 82.0262; a3 = 22.5929
-        b1 = -0.036267; b2 = 0.016241; b3 = -0.0020114
-!       per_m3 =  
-      end select
-
-      solub_dry = exp(       a1 + a2 / temp_k100 + a3 * log(temp_k100) + & 
-                  sal * (b1 - b2 * temp_k100 + b3 * temp_k100**2))  ! in mol / L
-      solub_dry = solub_dry * per_m3
-
-
-      return
-    end function solub_dry
 
 
     function sc_660(which_gas, temp_c)
