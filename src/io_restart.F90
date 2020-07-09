@@ -127,17 +127,17 @@ subroutine ini_ocean_io(year)
          longname='radiocarbon fraction'
          units='none'
        CASE(4)
+         trname='r39ar'
+         longname='argon-39 fraction'
+         units='none'
+       CASE(5)
          trname='f12'
          longname='cfc-12'
          units='mol / m**3'
-       CASE(5)
+       CASE(6)
          trname='sf6'
          longname='sulfur hexafluoride'
          units='mol / m**3'
-       CASE(6)
-         trname='r39ar'
-         longname='argon-39/40 ratio'
-         units='none'
 
        CASE DEFAULT
          write(trname,'(A3,i1)') 'tra_', j
