@@ -457,33 +457,34 @@ MODULE transit
       real(kind=8), intent(in) :: temp_c, &      ! temperature (deg C)
                                   sal            ! salinity ("PSU" or permil)
       real(kind=8) :: a1, a2, a3, a4, &          ! polynomial coefficients of the
-                      b1, b2, b3, b4, c1 = 0., & ! solubility function
+                      b1, b2, b3, b4, c1, &      ! solubility function
                       temp_k100, &               ! water temperature in K / 100
-                      per_m3 = 1000.             ! L / m**3 conversion factor
-      integer ::      pow = 2                    ! power in solubility function
+                      per_m3                     ! to convert concentrations to mol / m**3
+      integer ::      pow                        ! power in solubility function
 
       temp_k100 = (temp_c + 273.15) * 0.01
 
       select case (which_gas)
       case ("co2")
 !       CO2 in mol / (L * atm) (Weiss & Price 1985, doi:10.1016/0304-4203(80)90024-9, Table VI) 
-        a1 = -160.7333; a2 = 215.4152;   a3 = 89.8920;   a4 = -1.47759
-        b1 =  0.029941; b2 = -0.027455;  b3 = 0.0053407
+        a1 = -160.7333;  a2 = 215.4152;   a3 = 89.8920;   a4 = -1.47759;  pow = 2
+        b1 =  0.029941;  b2 = -0.027455;  b3 = 0.0053407; c1 = 0.
+        per_m3 = 1000.   ! L / m**3
       case ("f12") 
 !       CFC-12 in mol / (L * atm) (Warner & Weiss 1985, doi:10.1016/0198-0149(85)90099-8, Table 5)
-        a1 = -218.0971; a2 = 298.9702;   a3 = 113.8049;  a4 = -1.39165
-        b1 = -0.143566; b2 = 0.091015;   b3 = -0.0153924
+        a1 = -218.0971;  a2 = 298.9702;   a3 = 113.8049;   a4 = -1.39165; pow = 2
+        b1 = -0.143566;  b2 = 0.091015;   b3 = -0.0153924; c1 = 0.
+        per_m3 = 1000.   ! L / m**3
       case ("sf6") 
 !       SF6 in mol / (L * atm) (Bullister et al. 2002, doi:10.1016/S0967-0637(01)00051-6, Table 3)
-        a1 = -80.0343;  a2 = 117.232;    a3 = 29.5817;   a4 = 0.
-        b1 = 0.0335183; b2 = -0.0373942; b3 = 0.00774862
+        a1 = -80.0343;   a2 = 117.232;    a3 = 29.5817;    a4 = 0.;       pow = 2
+        b1 =  0.0335183; b2 = -0.0373942; b3 = 0.00774862; c1 = 0.
+        per_m3 = 1000.   ! L / m**3
       case("arg")
 !       Ar-39 in mol / kg (Jenkins et al. 2019, doi:10.1016/j.marchem.2019.03.007, Table 4)
-        a1 = -227.4607; a2 = 305.4347;   a3 = 180.5278;  a4 = -27.99450
-        b1 = -0.066942; b2 = 0.037201;   b3 = -0.0056364 
-        c1 = -5.30e-6
-        pow = 1
-        per_m3 = per_m3 * 1.0245  ! kg / l, global-mean value of surface water density
+        a1 = -227.4607; a2 = 305.4347;   a3 = 180.5278;   a4 = -27.99450; pow = 1
+        b1 = -0.066942; b2 = 0.037201;   b3 = -0.0056364; c1 = -5.30e-6
+        per_m3 = 1024.5  ! kg / m**3 assumed for the density of surface water
       end select
 
       solub = exp(       a1 + a2 / temp_k100 + a3 * log(temp_k100) + a4 * temp_k100 **pow + & 
@@ -510,7 +511,6 @@ MODULE transit
       select case (which_gas)
       case ("co2") ! CO2
         as = 2116.8; bs = -136.25; cs = 4.7353; ds = -0.092307; es = 0.0007555
-!!        sc_660 = (2116.8 - 136.25 *temp_c + 4.7353 * temp_c**2 - 0.092307 * temp_c**3 + 0.0007555 * temp_c**4) / 660
       case ("f12") ! CFC-12
         as = 3828.1; bs = -249.86; cs = 8.7603; ds = -0.171600; es = 0.0014080
       case ("sf6") ! SF6
