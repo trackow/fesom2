@@ -1221,7 +1221,6 @@ FUNCTION bc_surface(n, id)
 
   y_abc = geo_coord_nod2D(2,n) / rad  ! latitude of atmospheric tracer input
   yy_nh = (10. - y_abc) * 0.05        ! interpolation weight for tropical tracer values
-  if (mype==0) print *, "Month = ", month
 
   SELECT CASE (id)
     CASE (0)
