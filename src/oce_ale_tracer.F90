@@ -1199,7 +1199,7 @@ subroutine diff_part_hor_redi
 	end do
 end subroutine diff_part_hor_redi
 !==========================================================================
-! this function returns a boundary conditions for a specified thacer ID and surface node
+! this function returns a boundary condition for a specified tracer ID and surface node
 ! ID = 0 and 1 are reserved for temperature and salinity
 FUNCTION bc_surface(n, id)
   USE o_ARRAYS
@@ -1207,7 +1207,8 @@ FUNCTION bc_surface(n, id)
   USE g_PARSUP, only: mype, par_ex
   USE g_config
   use transit
-  use o_mesh ! MB needed for transient tracer simulations
+  use o_mesh                ! MB needed for transient tracer simulations
+  use g_clock, only: month  ! MB needed for transient tracer simulations
   use i_arrays, only: a_ice
   implicit none
 
@@ -1220,7 +1221,8 @@ FUNCTION bc_surface(n, id)
 
   y_abc = geo_coord_nod2D(2,n) / rad  ! latitude of atmospheric tracer input
   yy_nh = (10. - y_abc) * 0.05        ! interpolation weight for tropical tracer values
-    
+  if (mype==0) print *, "Month = ", month
+
   SELECT CASE (id)
     CASE (0)
       bc_surface=-dt*(heat_flux(n)/vcpw + tr_arr(1,n,1)*water_flux(n)*is_nonlinfs)
@@ -1262,8 +1264,8 @@ FUNCTION bc_surface(n, id)
          xf12_a = (1 - yy_nh) * xf12_nh + yy_nh * xf12_sh
          f12t_a = (1 - yy_nh) * f12t_nh + yy_nh * f12t_sh
       end if
-!!    UNDER CONSTRUCTION / 2DO: Interpolate annual to monthly?? values
-!!    xf12_a = xf12_a + dt * f12t_a / sec_per_year ??
+!!    Interpolate from annual to monthly values
+      xf12_a = xf12_a + month * f12t_a
 
 !     Local air-sea exchange gas flux of CFC-12 (in m / s):
       bc_surface = dt * gas_flux("f12", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
@@ -1281,8 +1283,8 @@ FUNCTION bc_surface(n, id)
          xsf6_a = (1 - yy_nh) * xsf6_nh + yy_nh * xsf6_sh
          sf6t_a = (1 - yy_nh) * sf6t_nh + yy_nh * sf6t_sh
       end if
-!!    UNDER CONSTRUCTION / 2DO: Interpolate annual to monthly?? values
-!!    xsf6_a = xsf6_a + dt * sf6t_a / sec_per_year ??
+!     Interpolate from annual to monthly values
+      xsf6_a = xsf6_a + month * sf6t_a
 
 !     Local air-sea exchange gas flux of SF6 (in m / s):
       bc_surface = dt * gas_flux("sf6", tr_arr(1,n,1), tr_arr(1,n,2), u_wind(n), v_wind(n), a_ice(n), & 
