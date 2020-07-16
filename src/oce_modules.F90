@@ -355,20 +355,20 @@ MODULE transit
 ! CMIP6 & OMIP-BGC: xCO2_a = 284.32 ppm for 1700-1850 CE
 ! PMIP4:            xCO2_a = 190.00 ppm for 21 kcal BP
   real(kind=8) :: xCO2_a = 284.32e-6
-! Atmospheric concentrations of CFC-12 and SF6 (mole fraction in dry air)
-  real(kind=8) :: xf12_a  = 0.00e-12, &  ! CFC-12, value passed in air-sea flux calculations
-                  xf12_nh = 0.00e-12, &  ! CFC-12, Northern Hemisphere
-                  xf12_sh = 0.00e-12, &  ! CFC-12, Southern Hemisphere
-                  xsf6_a  = 0.00e-12, &  ! SF6, value passed in air-sea flux calculations
-                  xsf6_nh = 0.00e-12, &  ! SF6, Northern Hemisphere
-                  xsf6_sh = 0.00e-12     ! SF6, Southern Hemisphere
-! Atmospheric concentration trends of atmospheric CFC-12 and SF6 (mole fraction in dry air per year)
-  real(kind=8) :: f12t_a  = 0.00e-12, &  ! CFC-12, value passed in air-sea flux calculations
-                  f12t_nh = 0.00e-12, &  ! CFC-12, Northern Hemisphere
-                  f12t_sh = 0.00e-12, &  ! CFC-12, Southern Hemisphere
-                  sf6t_a  = 0.00e-12, &  ! SF6, value passed in air-sea flux calculations
-                  sf6t_nh = 0.00e-12, &  ! SF6, Northern Hemisphere
-                  sf6t_sh = 0.00e-12     ! SF6, Southern Hemisphere
+! Atmospheric concentrations of CFC-12 and SF6 (ppt in dry air)
+  real(kind=8) :: xf12_a  = 0.00, &  ! CFC-12, value passed in air-sea flux calculations
+                  xf12_nh = 0.00, &  ! CFC-12, Northern Hemisphere
+                  xf12_sh = 0.00, &  ! CFC-12, Southern Hemisphere
+                  xsf6_a  = 0.00, &  ! SF6, value passed in air-sea flux calculations
+                  xsf6_nh = 0.00, &  ! SF6, Northern Hemisphere
+                  xsf6_sh = 0.00     ! SF6, Southern Hemisphere
+! Atmospheric concentration trends of atmospheric CFC-12 and SF6 (ppt / year)
+  real(kind=8) :: f12t_a  = 0.00, &  ! CFC-12, value passed in air-sea flux calculations
+                  f12t_nh = 0.00, &  ! CFC-12, Northern Hemisphere
+                  f12t_sh = 0.00, &  ! CFC-12, Southern Hemisphere
+                  sf6t_a  = 0.00, &  ! SF6, value passed in air-sea flux calculations
+                  sf6t_nh = 0.00, &  ! SF6, Northern Hemisphere
+                  sf6t_sh = 0.00     ! SF6, Southern Hemisphere
 ! Atmospheric Argon concentration (mole fraction in dry air)
   real(kind=8) :: xarg_a  = 9.34e-3      ! value passed in air-sea flux calculation
 ! Global-mean concentrations of DIC and Argon in the mixed layer (mol / m**3)
@@ -471,15 +471,15 @@ MODULE transit
         b1 =  0.029941;  b2 = -0.027455;  b3 = 0.0053407; c1 = 0.
         per_m3 = 1000.   ! L / m**3
       case ("f12") 
-!       CFC-12 in mol / (L * atm) (Warner & Weiss 1985, doi:10.1016/0198-0149(85)90099-8, Table 5)
+!       CFC-12 in pmol / (L * atm) (Warner & Weiss 1985, doi:10.1016/0198-0149(85)90099-8, Table 5)
         a1 = -218.0971;  a2 = 298.9702;   a3 = 113.8049;   a4 = -1.39165; pow = 2
         b1 = -0.143566;  b2 = 0.091015;   b3 = -0.0153924; c1 = 0.
-        per_m3 = 1000.   ! L / m**3
+        per_m3 = 1.e15   ! 1000. L / m**3 * 1.e12 pmol / mol
       case ("sf6") 
 !       SF6 in mol / (L * atm) (Bullister et al. 2002, doi:10.1016/S0967-0637(01)00051-6, Table 3)
         a1 = -80.0343;   a2 = 117.232;    a3 = 29.5817;    a4 = 0.;       pow = 2
         b1 =  0.0335183; b2 = -0.0373942; b3 = 0.00774862; c1 = 0.
-        per_m3 = 1000.   ! L / m**3
+        per_m3 = 1.e15   ! 1000. L / m**3 * 1.e12 pmol / mol
       case("arg")
 !       Ar-39 in mol / kg (Jenkins et al. 2019, doi:10.1016/j.marchem.2019.03.007, Table 4)
         a1 = -227.4607; a2 = 305.4347;   a3 = 180.5278;   a4 = -27.99450; pow = 1
