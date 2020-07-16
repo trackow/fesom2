@@ -335,21 +335,20 @@ USE g_ic3d
   !      this is just a dummy because 14C/C is initialized calling do_ic3d
        CASE (39)        ! initialize tracer ID=39, fractionation-corrected 39Ar/Ar
          tr_arr(:,:,i) = 0.5
-!         tr_arr(1,:,i) = 1.0
          if (mype==0) then
             write (i_string,  "(I3)") i
             write (id_string, "(I3)") id
             write(*,*) 'initializing '//trim(i_string)//'th tracer with ID='//trim(id_string)
          end if
        CASE (12)        ! initialize tracer ID=12, CFC-12
-         tr_arr(:,:,i) = 1.e-10
+         tr_arr(:,:,i) = 0.
          if (mype==0) then
             write (i_string,  "(I3)") i
             write (id_string, "(I3)") id
             write(*,*) 'initializing '//trim(i_string)//'th tracer with ID='//trim(id_string)
          end if
        CASE (6)         ! initialize tracer ID=6, SF6
-         tr_arr(:,:,i) = 1.e-10
+         tr_arr(:,:,i) = 0.
          if (mype==0) then
             write (i_string,  "(I3)") i
             write (id_string, "(I3)") id
