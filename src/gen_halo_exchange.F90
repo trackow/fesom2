@@ -1077,6 +1077,7 @@ IF ( mype == 0 ) THEN
        DEALLOCATE(irecvbuf, sendbuf)
     ENDDO
 ELSE
+    CALL time_delay(1.e-4)
     CALL MPI_SEND( node_size, 1, MPI_INTEGER, 0, 0, MPI_COMM_FESOM, MPIerr )
     CALL MPI_SEND( myList_nod2D(1), node_size, MPI_INTEGER, 0, 1, &
                    MPI_COMM_FESOM, MPIerr )
@@ -1137,6 +1138,7 @@ IF ( mype == 0 ) THEN
        DEALLOCATE(irecvbuf, sendbuf)
     ENDDO
 ELSE
+    CALL time_delay(1.e-4)
     CALL MPI_SEND( node_size, 1, MPI_INTEGER, 0, 0, MPI_COMM_FESOM, MPIerr )
     CALL MPI_SEND( myList_nod2D(1), node_size, MPI_INTEGER, 0, 1, &
                    MPI_COMM_FESOM, MPIerr )
@@ -1192,6 +1194,7 @@ IF ( mype == 0 ) THEN
        DEALLOCATE(irecvbuf, sendbuf)
     ENDDO
 ELSE
+    CALL time_delay(1.e-4)
     CALL MPI_SEND( elem_size, 1, MPI_INTEGER, 0, 0, MPI_COMM_FESOM, MPIerr )
     CALL MPI_SEND( myList_elem2D(1), elem_size, MPI_INTEGER, 0, 1, &
                    MPI_COMM_FESOM, MPIerr )
@@ -1254,6 +1257,7 @@ IF ( mype == 0 ) THEN
        DEALLOCATE(irecvbuf, sendbuf)
     ENDDO
 ELSE
+    CALL time_delay(1.e-4)
     CALL MPI_SEND( elem_size, 1, MPI_INTEGER, 0, 0, MPI_COMM_FESOM, MPIerr )
     CALL MPI_SEND( myList_elem2D(1), elem_size, MPI_INTEGER, 0, 1, &
                    MPI_COMM_FESOM, MPIerr )
@@ -1318,7 +1322,7 @@ IF ( mype == 0 ) THEN
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)
    call MPI_SEND( arr3D, myDim_nod2D*nl1, MPI_DOUBLE_PRECISION, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -1381,7 +1385,7 @@ IF ( mype == 0 ) THEN
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)
    call MPI_SEND( arr3D, myDim_nod2D*nl1, MPI_REAL, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -1442,7 +1446,7 @@ IF ( mype == 0 ) THEN
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)   
    call MPI_SEND( arr3D, myDim_nod2D*nl1, MPI_SHORT, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -1497,7 +1501,7 @@ IF ( mype == 0 ) THEN
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)
    call MPI_SEND( arr2D, myDim_nod2D, MPI_DOUBLE_PRECISION, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -1552,7 +1556,7 @@ IF ( mype == 0 ) THEN
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)
    call MPI_SEND( arr2D, myDim_nod2D, MPI_REAL, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -1608,7 +1612,7 @@ IF ( mype == 0 ) THEN
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)   
    call MPI_SEND( arr2D, myDim_nod2D, MPI_SHORT, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -1675,7 +1679,7 @@ IF ( mype == 0 ) THEN
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)
    call MPI_SEND( arr3D, myDim_elem2D*nl1, MPI_DOUBLE_PRECISION, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -1743,7 +1747,7 @@ IF ( mype == 0 ) THEN
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)
    call MPI_SEND( arr3D, myDim_elem2D*nl1, MPI_REAL, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -1812,7 +1816,7 @@ IF ( mype == 0 ) THEN
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)
    call MPI_SEND( arr3D, myDim_elem2D*nl1, MPI_SHORT, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -1867,13 +1871,12 @@ IF ( mype == 0 ) THEN
       deallocate(recvbuf)
 
    else
-
       arr2D_global(:) = arr2D(:)
      
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)   
    call MPI_SEND( arr2D, myDim_elem2D, MPI_DOUBLE_PRECISION, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -1933,7 +1936,7 @@ IF ( mype == 0 ) THEN
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)
    call MPI_SEND( arr2D, myDim_elem2D, MPI_REAL, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -1993,7 +1996,7 @@ IF ( mype == 0 ) THEN
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)
    call MPI_SEND( arr2D, myDim_elem2D, MPI_SHORT, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -2060,7 +2063,7 @@ ELSE
 
    allocate(sendbuf(nl1,myDim_nod2D))
    sendbuf(1:nl1,1:myDim_nod2D) = arr3D(1:nl1,1:myDim_nod2D)
-   
+   CALL time_delay(1.e-4)   
    call MPI_SEND(sendbuf, myDim_nod2D*nl1, MPI_REAL, 0, 2, MPI_COMM_FESOM, MPIerr )
    deallocate(sendbuf)
    
@@ -2117,7 +2120,7 @@ IF ( mype == 0 ) THEN
 
 ELSE
    sendbuf(1:myDim_nod2D) = real(arr2D(1:myDim_nod2D),real32)
-
+   CALL time_delay(1.e-4)
    call MPI_SEND(sendbuf, myDim_nod2D, MPI_REAL, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -2182,7 +2185,7 @@ IF ( mype == 0 ) THEN
 ELSE
    allocate(sendbuf(nl1,myDim_elem2D))
    sendbuf(1:nl1,1:myDim_elem2D) = arr3D(1:nl1,1:myDim_elem2D)
-   
+   CALL time_delay(1.e-4)   
    call MPI_SEND(sendbuf, myDim_elem2D*nl1, MPI_REAL, 0, 2, MPI_COMM_FESOM, MPIerr )
    deallocate(sendbuf)
 ENDIF
@@ -2243,6 +2246,7 @@ IF ( mype == 0 ) THEN
 ELSE
    
    sendbuf(1:myDim_elem2D) = real(arr2D(1:myDim_elem2D),real32)
+   CALL time_delay(1.e-4)
    call MPI_SEND(sendbuf, myDim_elem2D, MPI_REAL, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -2281,6 +2285,7 @@ subroutine gather_elem2D_i(arr2D, arr2D_global)
         arr2D_global(:) = arr2D(:)
      endif
   ELSE
+     CALL time_delay(1.e-4)
      call MPI_SEND(arr2D, myDim_elem2D, MPI_INTEGER, 0, 2, MPI_COMM_FESOM, MPIerr )
   ENDIF
 end subroutine gather_elem2D_i
@@ -2331,7 +2336,7 @@ IF ( mype == 0 ) THEN
    endif
 
 ELSE
-   
+   CALL time_delay(1.e-4)   
    call MPI_SEND( arr2D, myDim_nod2D, MPI_INTEGER, 0, 2, MPI_COMM_FESOM, MPIerr )
    
 ENDIF
@@ -2370,6 +2375,7 @@ IF ( mype == 0 ) THEN
        DEALLOCATE(ibuf, rbuf)
     ENDDO
 ELSE
+    CALL time_delay(1.e-4)
     CALL MPI_SEND( myDim_edge2D, 1, MPI_INTEGER, 0, 0, MPI_COMM_FESOM, MPIerr )
     CALL MPI_SEND( myList_edge2D(1), myDim_edge2D, MPI_INTEGER, 0, 1, &
                    MPI_COMM_FESOM, MPIerr )
@@ -2410,6 +2416,7 @@ IF ( mype == 0 ) THEN
        DEALLOCATE(ibuf, vbuf)
     ENDDO
 ELSE
+    CALL time_delay(1.e-4)
     CALL MPI_SEND( myDim_edge2D, 1, MPI_INTEGER, 0, 0, MPI_COMM_FESOM, MPIerr )
     CALL MPI_SEND( myList_edge2D(1), myDim_edge2D, MPI_INTEGER, 0, 1, &
                    MPI_COMM_FESOM, MPIerr )

@@ -19,8 +19,8 @@ io_listsize=100 !number of streams to allocate. shallbe large or equal to the nu
 # 'otracers' - all other tracers if applicable
 # for 'dMOC' to work ldiag_dMOC must be .true. otherwise no output
 &nml_list
-io_list =  'sst       ',1, 'm', 4,
-           'sss       ',1, 'm', 4,
+io_list =  'sst       ',1, 'd', 4,
+           'sss       ',1, 'd', 4,
     	   'ssh       ',1, 'm', 4,
            'uice      ',1, 'm', 4,
            'vice      ',1, 'm', 4,

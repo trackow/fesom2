@@ -31,5 +31,8 @@
     else
       allocate(sendbuf(myDim_elem2D))
       sendbuf(1:myDim_elem2D) = arr2D(1:myDim_elem2D)
+      CALL time_delay(1.e-4)
+!     write(*,*) mype, 'checkpoint 0'
       call mpi_send(sendbuf, myDim_elem2D, mpi_precision, root_rank, tag, io_comm, MPIerr)
+!     write(*,*) mype, 'checkpoint 1'
     end if

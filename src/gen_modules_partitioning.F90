@@ -496,7 +496,6 @@ subroutine init_gatherLists
   
   integer :: n2D, e2D, sum_loc_elem2D
   integer :: n, estart, nstart
-
   if (mype==0) then
 
      if (npes > 1) then
@@ -514,8 +513,6 @@ subroutine init_gatherLists
            remPtr_nod2D(n+1)  = remPtr_nod2D(n)  + n2D
            remPtr_elem2D(n+1) = remPtr_elem2D(n) + e2D 
         enddo
-
-
 
         allocate(remList_nod2D(remPtr_nod2D(npes)))   ! this should be nod2D - myDim_nod2D
         allocate(remList_elem2D(remPtr_elem2D(npes))) ! this is > elem2D, because the elements overlap.
@@ -535,7 +532,7 @@ subroutine init_gatherLists
         enddo
      end if
   else
-
+     call time_delay(1.e-5)
      call MPI_SEND(myDim_nod2D,   1,            MPI_INTEGER, 0, 0, MPI_COMM_FESOM, MPIerr )
      call MPI_SEND(myDim_elem2D,  1,            MPI_INTEGER, 0, 1, MPI_COMM_FESOM, MPIerr )
      call MPI_SEND(myList_nod2D,  myDim_nod2D,  MPI_INTEGER, 0, 2, MPI_COMM_FESOM, MPIerr )
@@ -544,6 +541,28 @@ subroutine init_gatherLists
   endif
 
 end subroutine init_gatherLists
+
+!===================================================================
+!a dirty trick to make MPI stable
+!some MPI realizations hang when the information is being collected on a specific core (all send to one core)
+!this routine introduces a time delay for Nth core as N*eps
+!time delay adds asinchronicity and the model runs stable. call it before MPI_SEND where needed
+ 
+subroutine time_delay(eps)
+
+  use o_MESH
+  implicit none
+
+  real(kind=WP), INTENT(IN) :: eps
+  real(kind=WP) :: t0,t1
+
+     t0=MPI_Wtime()
+     do
+       t1=MPI_Wtime()
+       if(t1-t0 > real(mype)*eps) exit
+     end do
+
+end subroutine time_delay
 
 
 end module g_PARSUP

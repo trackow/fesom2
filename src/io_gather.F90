@@ -103,7 +103,8 @@ contains
 
     if(.not. nod2D_lists_initialized) stop "io_gather_module has not been initialized"
 
-    include "io_gather_nod.inc"  
+    include "io_gather_nod.inc"
+    write(*,*) mype, 'checkpoint 2'
   end subroutine
 
 
