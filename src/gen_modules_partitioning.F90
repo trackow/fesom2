@@ -551,17 +551,10 @@ end subroutine init_gatherLists
 subroutine time_delay(eps)
 
   use o_MESH
-  implicit none
 
   real(kind=WP), INTENT(IN) :: eps
-  real(kind=WP) :: t0,t1
-
-     t0=MPI_Wtime()
-     do
-       t1=MPI_Wtime()
-       if(t1-t0 > real(mype)*eps) exit
-     end do
-
+  
+  call fu_sleep_microseconds(int(mype*eps*1000000))
 end subroutine time_delay
 
 
