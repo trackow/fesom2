@@ -402,8 +402,8 @@ MODULE transit
 
 
     function iso_flux(which_gas, temp_c, sal, u_10, v_10, f_ice, p_atm, x_gas, r_air, r_sea, c_surf)
-!     Calculate isotopic air-sea exchange fluxes in m / s assuming local solubility equilibrium
-!     for the abundant isotopologue (e.g. 12CO2). Positive values mean oceanic uptake.
+!     Calculate isotopic air-sea exchange fluxes in 1 / (m**2 * s) assuming local solubility equilibrium
+!     for the abundant isotopologue. Positive values mean oceanic uptake.
       implicit none
 
       real(kind=8) :: iso_flux
@@ -426,7 +426,7 @@ MODULE transit
 
 
     function gas_flux(which_gas, temp_c, sal, u_10, v_10, f_ice, p_atm, x_gas, c_surf)
-!     Computes air-sea exchange gas fluxes in m / s, positive values mean oceanic uptake.
+!     Computes air-sea exchange gas fluxes in mol / (m**2 * s) , positive values mean oceanic uptake.
       implicit none
 
       real(kind=8) :: gas_flux
@@ -469,17 +469,17 @@ MODULE transit
 !       CO2 in mol / (L * atm) (Weiss & Price 1985, doi:10.1016/0304-4203(80)90024-9, Table VI) 
         a1 = -160.7333;  a2 = 215.4152;   a3 = 89.8920;   a4 = -1.47759;  pow = 2
         b1 =  0.029941;  b2 = -0.027455;  b3 = 0.0053407; c1 = 0.
-        con2con = 1000.   ! convert to mol / (m**3 * atm)
+        con2con = 1000.  ! convert to mol / (m**3 * atm)
       case ("f12") 
 !       CFC-12 in mol / (L * atm) (Warner & Weiss 1985, doi:10.1016/0198-0149(85)90099-8, Table 5)
         a1 = -218.0971;  a2 = 298.9702;   a3 = 113.8049;   a4 = -1.39165; pow = 2
         b1 = -0.143566;  b2 = 0.091015;   b3 = -0.0153924; c1 = 0.
-        con2con = 1.e12   ! convert to pmol / (L * atm)
+        con2con = 1000. ! convert to mol / (m**3 * atm)
       case ("sf6") 
 !       SF6 in mol / (L * atm) (Bullister et al. 2002, doi:10.1016/S0967-0637(01)00051-6, Table 3)
         a1 = -80.0343;   a2 = 117.232;    a3 = 29.5817;    a4 = 0.;       pow = 2
         b1 =  0.0335183; b2 = -0.0373942; b3 = 0.00774862; c1 = 0.
-        con2con = 1.e12   ! convert to pmol / (L * atm)
+        con2con = 1000. ! convert to mol / (m**3 * atm)
       case("arg")
 !       Ar-39 in mol / kg (Jenkins et al. 2019, doi:10.1016/j.marchem.2019.03.007, Table 4)
         a1 = -227.4607; a2 = 305.4347;   a3 = 180.5278;   a4 = -27.99450; pow = 1
