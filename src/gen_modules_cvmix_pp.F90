@@ -162,7 +162,7 @@ module g_cvmix_pp
     !===========================================================================
     ! calculate PP vertrical mixing coefficients from CVMIX library
     subroutine calc_cvmix_pp(dynamics, partit, mesh)
-        type(t_mesh)  ,   intent(in) , target :: mesh
+        type(t_mesh)  , intent(in)   , target :: mesh
         type(t_partit), intent(inout), target :: partit
         type(t_dyn)   , intent(in)   , target :: dynamics
         integer       :: node, elem, nz, nln, nun, elnodes(3), windnl=2, node_size
