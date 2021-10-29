@@ -2786,7 +2786,7 @@ subroutine oce_timestep_ale(n, dynamics, tracers, partit, mesh)
     ! mixing     
     else if(mix_scheme_nmb==2 .or. mix_scheme_nmb==27) then
         if (flag_debug .and. mype==0)  print *, achar(27)//'[36m'//'     --> call oce_mixing_PP'//achar(27)//'[0m' 
-        call oce_mixing_PP(partit, mesh)
+        call oce_mixing_PP(dynamics, partit, mesh)
         call mo_convect(partit, mesh)
         
     ! use CVMIX KPP (Large at al. 1994) 
