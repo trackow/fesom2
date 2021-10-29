@@ -52,7 +52,7 @@ TYPE T_DYN
     ! contains: %uv, %uv_rhsAB, %w, %w_e, %w_i 
     type(t_dyn_data)                         :: data
     
-    ! contains: %uv_rhs, %uvnode, %uvnode_rhsAB
+    ! contains: %uv_rhs, %uvnode
     type(t_dyn_work)                         :: work
     
     ! visc_option=...
