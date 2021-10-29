@@ -383,19 +383,19 @@ SUBROUTINE dynamics_init(dynamics, partit, mesh)
     allocate(dynamics%data%w(                nl, node_size))
     allocate(dynamics%data%w_e(              nl, node_size))
     allocate(dynamics%data%w_i(              nl, node_size))
-    dynamics%data%uv           = 0.0_WP
-    dynamics%data%uv_rhsAB     = 0.0_WP
-    dynamics%data%w            = 0.0_WP
-    dynamics%data%w_e          = 0.0_WP
-    dynamics%data%w_i          = 0.0_WP
+    dynamics%data%uv         = 0.0_WP
+    dynamics%data%uv_rhsAB   = 0.0_WP
+    dynamics%data%w          = 0.0_WP
+    dynamics%data%w_e        = 0.0_WP
+    dynamics%data%w_i        = 0.0_WP
     
     ! allocate work arrays in derived type
-    allocate(dynamics%work%uv_rhs(      2, nl-1, elem_size))
-    allocate(dynamics%work%uvnode(      2, nl-1, node_size))
-    allocate(dynamics%work%uvnode_rhsAB(2, nl-1, node_size))
-    dynamics%work%uv_rhs       = 0.0_WP
-    dynamics%work%uvnode       = 0.0_WP
-    dynamics%work%uvnode_rhsAB = 0.0_WP
+    allocate(dynamics%work%uv_rhs(    2, nl-1, elem_size))
+    allocate(dynamics%work%uvnode(    2, nl-1, node_size))
+    allocate(dynamics%work%uvnode_rhs(2, nl-1, node_size))
+    dynamics%work%uv_rhs     = 0.0_WP
+    dynamics%work%uvnode     = 0.0_WP
+    dynamics%work%uvnode_rhs = 0.0_WP
     
     ! set parameters in derived type
     dynamics%visc_opt     = visc_opt
