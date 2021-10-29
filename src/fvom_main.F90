@@ -294,7 +294,7 @@ integer mpi_version_len
             if (ice_update) call ice_timestep(n, partit, mesh)  
             !___compute fluxes to the ocean: heat, freshwater, momentum_________
             if (flag_debug .and. mype==0)  print *, achar(27)//'[34m'//' --> call oce_fluxes_mom...'//achar(27)//'[0m'
-            call oce_fluxes_mom(partit, mesh, dynamics) ! momentum only
+            call oce_fluxes_mom(dynamics, partit, mesh) ! momentum only
             call oce_fluxes(tracers, partit, mesh)
         end if
         call before_oce_step(tracers, partit, mesh) ! prepare the things if required

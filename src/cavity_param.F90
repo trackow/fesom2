@@ -382,7 +382,7 @@ end subroutine cavity_heat_water_fluxes_2eq
 !_______________________________________________________________________________
 ! Compute the momentum fluxes under ice cavity
 ! Moved to this separated routine by Qiang, 20.1.2012
-subroutine cavity_momentum_fluxes(partit, mesh, dynamics)
+subroutine cavity_momentum_fluxes(dynamics, partit, mesh)
     use MOD_MESH
     USE MOD_PARTIT
     USE MOD_PARSUP

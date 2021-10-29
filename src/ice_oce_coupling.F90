@@ -29,7 +29,7 @@ end module
 !
 !
 !_______________________________________________________________________________
-subroutine oce_fluxes_mom(partit, mesh, dynamics)
+subroutine oce_fluxes_mom(dynamics, partit, mesh)
     ! transmits the relevant fields from the ice to the ocean model
     !
     use o_PARAM
