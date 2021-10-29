@@ -32,7 +32,7 @@ END TYPE T_DYN_DATA
 !_______________________________________________________________________________
 ! set working arrays structure 
 TYPE T_DYN_WORK
-    real(kind=WP), allocatable, dimension(:,:,:):: uv_rhs, uvnode, uvnode_rhsAB
+    real(kind=WP), allocatable, dimension(:,:,:):: uv_rhs, uvnode, uvnode_rhs
     
     !___________________________________________________________________________
     contains
@@ -140,9 +140,9 @@ subroutine WRITE_T_DYN_WORK(dynwork, unit, iostat, iomsg)
     integer,              intent(in)     :: unit
     integer,              intent(out)    :: iostat
     character(*),         intent(inout)  :: iomsg
-    call write_bin_array(dynwork%uv_rhs      , unit, iostat, iomsg)
-    call write_bin_array(dynwork%uvnode      , unit, iostat, iomsg)
-    call write_bin_array(dynwork%uvnode_rhsAB, unit, iostat, iomsg)
+    call write_bin_array(dynwork%uv_rhs    , unit, iostat, iomsg)
+    call write_bin_array(dynwork%uvnode    , unit, iostat, iomsg)
+    call write_bin_array(dynwork%uvnode_rhs, unit, iostat, iomsg)
 end subroutine WRITE_T_DYN_WORK
 
 subroutine READ_T_DYN_WORK(dynwork, unit, iostat, iomsg)
@@ -151,9 +151,9 @@ subroutine READ_T_DYN_WORK(dynwork, unit, iostat, iomsg)
     integer,              intent(in)     :: unit
     integer,              intent(out)    :: iostat
     character(*),         intent(inout)  :: iomsg
-    call read_bin_array(dynwork%uv_rhs      , unit, iostat, iomsg)
-    call read_bin_array(dynwork%uvnode      , unit, iostat, iomsg)
-    call read_bin_array(dynwork%uvnode_rhsAB, unit, iostat, iomsg)
+    call read_bin_array(dynwork%uv_rhs    , unit, iostat, iomsg)
+    call read_bin_array(dynwork%uvnode    , unit, iostat, iomsg)
+    call read_bin_array(dynwork%uvnode_rhs, unit, iostat, iomsg)
 end subroutine READ_T_DYN_WORK
 
 !
