@@ -2809,7 +2809,7 @@ subroutine oce_timestep_ale(n, dynamics, tracers, partit, mesh)
     ! Model for the diapycnal diffusivity induced by internal gravity waves" 
     else if(mix_scheme_nmb==5 .or. mix_scheme_nmb==56) then    
         if (flag_debug .and. mype==0)  print *, achar(27)//'[36m'//'     --> call calc_cvmix_tke'//achar(27)//'[0m'
-        call calc_cvmix_tke(partit, mesh)
+        call calc_cvmix_tke(dynamics, partit, mesh)
         call mo_convect(partit, mesh)
         
     end if     
