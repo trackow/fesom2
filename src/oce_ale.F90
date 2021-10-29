@@ -92,15 +92,17 @@ end module
 
 module oce_timestep_ale_interface
   interface
-    subroutine oce_timestep_ale(n, tracers, partit, mesh)
+    subroutine oce_timestep_ale(n, dynamics, tracers, partit, mesh)
       use mod_mesh
-      USE MOD_PARTIT
-      USE MOD_PARSUP
+      use MOD_PARTIT
+      use MOD_PARSUP
       use mod_tracer
-      integer,        intent(in)                         :: n
-      type(t_mesh),   intent(in),    target :: mesh
+      use MOD_DYN
+      integer       , intent(in)            :: n
+      type(t_mesh)  , intent(in)   , target :: mesh
       type(t_partit), intent(inout), target :: partit
       type(t_tracer), intent(inout), target :: tracers
+      type(t_dyn)   , intent(inout), target :: dynamics
     end subroutine
   end interface
 end module
@@ -2674,10 +2676,11 @@ end subroutine impl_vert_visc_ale
 !
 !
 !===============================================================================
-subroutine oce_timestep_ale(n, tracers, partit, mesh)
+subroutine oce_timestep_ale(n, dynamics, tracers, partit, mesh)
     use g_config
     use MOD_MESH
     use MOD_TRACER
+    use MOD_DYN
     use o_ARRAYS
     use o_PARAM
     USE MOD_PARTIT
@@ -2700,9 +2703,10 @@ subroutine oce_timestep_ale(n, tracers, partit, mesh)
     use write_step_info_interface
     use check_blowup_interface
     IMPLICIT NONE
-    type(t_mesh),   intent(in),    target :: mesh
+    type(t_mesh)  , intent(in)   , target :: mesh
     type(t_partit), intent(inout), target :: partit
     type(t_tracer), intent(inout), target :: tracers
+    type(t_dyn)   , intent(inout), target :: dynamics
 
     real(kind=8)      :: t0,t1, t2, t30, t3, t4, t5, t6, t7, t8, t9, t10, loc, glo
     integer           :: n, node
@@ -2788,7 +2792,7 @@ subroutine oce_timestep_ale(n, tracers, partit, mesh)
     ! use CVMIX KPP (Large at al. 1994) 
     else if(mix_scheme_nmb==3 .or. mix_scheme_nmb==37) then
         if (flag_debug .and. mype==0)  print *, achar(27)//'[36m'//'     --> call calc_cvmix_kpp'//achar(27)//'[0m'
-        call calc_cvmix_kpp(tracers, partit, mesh)
+        call calc_cvmix_kpp(dynamics, tracers, partit, mesh)
         call mo_convect(partit, mesh)
         
     ! use CVMIX PP (Pacanowski and Philander 1981) parameterisation for mixing

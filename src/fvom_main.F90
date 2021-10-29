@@ -302,7 +302,7 @@ integer mpi_version_len
         !___model ocean step____________________________________________________
         if (flag_debug .and. mype==0)  print *, achar(27)//'[34m'//' --> call oce_timestep_ale'//achar(27)//'[0m'
 
-        call oce_timestep_ale(n, tracers, partit, mesh)
+        call oce_timestep_ale(n, dynamics, tracers, partit, mesh)
 
         t3 = MPI_Wtime()
         !___compute energy diagnostics..._______________________________________
