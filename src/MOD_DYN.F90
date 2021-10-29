@@ -79,14 +79,14 @@ TYPE T_DYN
     real(kind=WP)                               :: div_c_visc   = 0.5
     real(kind=WP)                               :: leith_c_visc = 0.05
 
-    logical                                     :: do_ivertvisc = .true.
+    logical                                     :: use_ivertvisc = .true.
     integer                                     :: momadv_opt   = 2
     
     ! Switch on free slip
-    logical                                     :: do_freeslip  = .false. 
+    logical                                     :: use_freeslip  = .false. 
     
     ! do implicite, explicite spliting of vertical velocity
-    logical                                     :: do_wsplit    = .false.
+    logical                                     :: use_wsplit    = .false.
     ! maximum allowed CFL criteria in vertical (0.5 < w_max_cfl < 1.) 
     ! in older FESOM it used to be w_exp_max=1.e-3
     real(kind=WP)                               :: wsplit_maxcfl= 1.0     
@@ -177,11 +177,11 @@ subroutine WRITE_T_DYN(dynamics, unit, iostat, iomsg)
     write(unit, iostat=iostat, iomsg=iomsg) dynamics%div_c_visc
     write(unit, iostat=iostat, iomsg=iomsg) dynamics%leith_c_visc
     !___________________________________________________________________________
-    write(unit, iostat=iostat, iomsg=iomsg) dynamics%do_ivertvisc
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%use_ivertvisc
     write(unit, iostat=iostat, iomsg=iomsg) dynamics%momadv_opt
     !___________________________________________________________________________
-    write(unit, iostat=iostat, iomsg=iomsg) dynamics%do_freeslip
-    write(unit, iostat=iostat, iomsg=iomsg) dynamics%do_wsplit
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%use_freeslip
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%use_wsplit
     write(unit, iostat=iostat, iomsg=iomsg) dynamics%wsplit_maxcfl
 end subroutine WRITE_T_DYN
 
@@ -202,11 +202,11 @@ subroutine READ_T_DYN(dynamics, unit, iostat, iomsg)
     read(unit, iostat=iostat, iomsg=iomsg) dynamics%div_c_visc
     read(unit, iostat=iostat, iomsg=iomsg) dynamics%leith_c_visc
     !___________________________________________________________________________
-    read(unit, iostat=iostat, iomsg=iomsg) dynamics%do_ivertvisc
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%use_ivertvisc
     read(unit, iostat=iostat, iomsg=iomsg) dynamics%momadv_opt
     !___________________________________________________________________________
-    read(unit, iostat=iostat, iomsg=iomsg) dynamics%do_freeslip
-    read(unit, iostat=iostat, iomsg=iomsg) dynamics%do_wsplit
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%use_freeslip
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%use_wsplit
     read(unit, iostat=iostat, iomsg=iomsg) dynamics%wsplit_maxcfl
 end subroutine READ_T_DYN
 

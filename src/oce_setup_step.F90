@@ -341,10 +341,10 @@ SUBROUTINE dynamics_init(dynamics, partit, mesh)
     integer        :: visc_opt
     real(kind=WP)  :: gamma0_visc, gamma1_visc, gamma2_visc
     real(kind=WP)  :: div_c_visc, leith_c_visc
-    logical        :: do_ivertvisc
+    logical        :: use_ivertvisc
     integer        :: momadv_opt
-    logical        :: do_freeslip
-    logical        :: do_wsplit
+    logical        :: use_freeslip
+    logical        :: use_wsplit
     real(kind=WP)  :: wsplit_maxcfl
 
     type(t_mesh)  , intent(in)   , target :: mesh
@@ -352,8 +352,8 @@ SUBROUTINE dynamics_init(dynamics, partit, mesh)
     type(t_dyn)   , intent(inout), target :: dynamics
     
     ! define dynamics namelist parameter
-    namelist /dynamics_visc    / visc_opt, gamma0_visc, gamma1_visc, gamma2_visc, div_c_visc, leith_c_visc, do_ivertvisc
-    namelist /dynamics_general / momadv_opt, do_freeslip, do_wsplit, wsplit_maxcfl 
+    namelist /dynamics_visc    / visc_opt, gamma0_visc, gamma1_visc, gamma2_visc, div_c_visc, leith_c_visc, use_ivertvisc
+    namelist /dynamics_general / momadv_opt, use_freeslip, use_wsplit, wsplit_maxcfl 
 
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
@@ -404,10 +404,10 @@ SUBROUTINE dynamics_init(dynamics, partit, mesh)
     dynamics%gamma2_visc  = gamma2_visc
     dynamics%div_c_visc   = div_c_visc
     dynamics%leith_c_visc = leith_c_visc
-    dynamics%do_ivertvisc = do_ivertvisc
+    dynamics%use_ivertvisc = use_ivertvisc
     dynamics%momadv_opt   = momadv_opt
-    dynamics%do_freeslip  = do_freeslip
-    dynamics%do_wsplit    = do_wsplit
+    dynamics%use_freeslip  = use_freeslip
+    dynamics%use_wsplit    = use_wsplit
     dynamics%wsplit_maxcfl= wsplit_maxcfl
     
 END SUBROUTINE dynamics_init

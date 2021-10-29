@@ -15,13 +15,13 @@ visc_opt     = 5
 ! 7=Biharmonic flow aware (viscosity depends on velocity differences)
 ! 8=Dynamic Backscatter
 
-do_ivertvisc = .true.  
+use_ivertvisc= .true.  
 /
 
 &dynamics_general
 momadv_opt   = 2       ! option for momentum advection in moment only =2
-do_freeslip  = .false. ! Switch on free slip
-do_wsplit    = .false. ! Switch for implicite/explicte splitting of vert. velocity
+use_freeslip = .false. ! Switch on free slip
+use_wsplit   = .false. ! Switch for implicite/explicte splitting of vert. velocity
 wsplit_maxcfl= 1.0     ! maximum allowed CFL criteria in vertical (0.5 < w_max_cfl < 1.) 
                        ! in older FESOM it used to be w_exp_max=1.e-3
 /
