@@ -382,26 +382,30 @@ end subroutine cavity_heat_water_fluxes_2eq
 !_______________________________________________________________________________
 ! Compute the momentum fluxes under ice cavity
 ! Moved to this separated routine by Qiang, 20.1.2012
-subroutine cavity_momentum_fluxes(partit, mesh)
+subroutine cavity_momentum_fluxes(partit, mesh, dynamics)
     use MOD_MESH
     USE MOD_PARTIT
     USE MOD_PARSUP
+    USE MOD_DYN
     use o_PARAM , only: density_0, C_d, WP
-    use o_ARRAYS, only: UV, Unode, stress_surf, stress_node_surf
+    use o_ARRAYS, only: stress_surf, stress_node_surf
     use i_ARRAYS, only: u_w, v_w  
     implicit none
     
     !___________________________________________________________________________
     type(t_partit), intent(inout), target :: partit
-    type(t_mesh),   intent(in),    target :: mesh
+    type(t_mesh)  , intent(in)   , target :: mesh
+    type(t_dyn)   , intent(in)   , target :: dynamics
     integer        :: elem, elnodes(3), nzmin, node
     real(kind=WP)  :: aux
-
+    real(kind=WP), dimension(:,:,:), pointer :: UV, UVnode
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
 #include "associate_part_ass.h"
 #include "associate_mesh_ass.h"
-
+    UV     => dynamics%data%uv(:,:,:)
+    UVnode => dynamics%work%uvnode(:,:,:)
+    
     !___________________________________________________________________________
     do elem=1,myDim_elem2D
         elnodes= elem2D_nodes(:,elem)
@@ -424,9 +428,9 @@ subroutine cavity_momentum_fluxes(partit, mesh)
         ! momentum stress:
         ! need to check the sensitivity to the drag coefficient
         ! here I use the bottom stress coefficient, which is 3e-3, for this FO2 work.
-        aux=sqrt(Unode(1,nzmin,node)**2+Unode(2,nzmin,node)**2)*density_0*C_d 
-        stress_node_surf(1,node)=-aux*Unode(1,nzmin,node)
-        stress_node_surf(2,node)=-aux*Unode(2,nzmin,node)
+        aux=sqrt(UVnode(1,nzmin,node)**2+UVnode(2,nzmin,node)**2)*density_0*C_d 
+        stress_node_surf(1,node)=-aux*UVnode(1,nzmin,node)
+        stress_node_surf(2,node)=-aux*UVnode(2,nzmin,node)
     end do
 end subroutine cavity_momentum_fluxes
 !
