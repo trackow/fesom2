@@ -17,7 +17,7 @@ TYPE T_DYN_DATA
     real(kind=WP), allocatable, dimension(:,:,:):: uv, uv_rhsAB  
 
     ! instant vertical velm explicite+implicite part
-    real(kind=WP), allocatable, dimension(:,:,:):: w, w_e, w_i   
+    real(kind=WP), allocatable, dimension(:,:)  :: w, w_e, w_i   
 
     !___________________________________________________________________________
     contains
@@ -25,7 +25,7 @@ TYPE T_DYN_DATA
         procedure READ_T_DYN_DATA
         generic :: write(unformatted) => WRITE_T_DYN_DATA
         generic :: read(unformatted)  => READ_T_DYN_DATA
-END TYPE T_TRACER_DATA
+END TYPE T_DYN_DATA
 
 !
 !
@@ -45,7 +45,7 @@ END TYPE T_DYN_WORK
 !
 !
 !_______________________________________________________________________________
-! set main structure for dynamics, contains viscosity options and parameters + 
+! set main structure for dynamicss, contains viscosity options and parameters + 
 ! option for momentum advection 
 TYPE T_DYN
     
@@ -64,21 +64,33 @@ TYPE T_DYN
     ! 6=Biharmonic flow aware (viscosity depends on velocity Laplacian)
     ! 7=Biharmonic flow aware (viscosity depends on velocity differences)
     ! 8=Dynamic Backscatter
-    integer                                     :: visc_opt      
+    integer                                     :: visc_opt=5      
 
     ! gamma0 [m/s],   backgroung viscosity= gamma0*len, it should be as small 
     !                 as possible (keep it < 0.01 m/s).
     ! gamma1 [nodim], for computation of the flow aware viscosity
     ! gamma2 [s/m],   is only used in easy backscatter option
-    real(kind=WP)                               :: gamma0_visc, gamma1_visc, gamma2_visc
+    real(kind=WP)                               :: gamma0_visc  = 0.03
+    real(kind=WP)                               :: gamma1_visc  = 0.1
+    real(kind=WP)                               :: gamma2_visc  = 0.285
 
     ! div_c the strength of the modified Leith viscosity, nondimensional, 0.3 -- 1.0
     ! leith the strength of the Leith viscosity
-    real(kind=WP)                               :: div_c_visc, leith_c_visc
+    real(kind=WP)                               :: div_c_visc   = 0.5
+    real(kind=WP)                               :: leith_c_visc = 0.05
 
-    logical                                     :: i_vert_visc =.true.
-    integer                                     :: mom_adv=2
+    logical                                     :: do_ivertvisc = .true.
+    integer                                     :: momadv_opt   = 2
     
+    ! Switch on free slip
+    logical                                     :: do_freeslip  = .false. 
+    
+    ! do implicite, explicite spliting of vertical velocity
+    logical                                     :: do_wsplit    = .false.
+    ! maximum allowed CFL criteria in vertical (0.5 < w_max_cfl < 1.) 
+    ! in older FESOM it used to be w_exp_max=1.e-3
+    real(kind=WP)                               :: wsplit_maxcfl= 1.0     
+
     !___________________________________________________________________________
     contains
         procedure WRITE_T_DYN
@@ -87,6 +99,7 @@ TYPE T_DYN
         generic :: read(unformatted)  => READ_T_DYN
 END TYPE T_DYN
 
+contains
 !
 !
 !_______________________________________________________________________________
@@ -147,46 +160,54 @@ end subroutine READ_T_DYN_WORK
 !
 !_______________________________________________________________________________
 ! set unformatted writing and reading for T_DYN
-subroutine WRITE_T_DYN(dynamic, unit, iostat, iomsg)
+subroutine WRITE_T_DYN(dynamics, unit, iostat, iomsg)
     IMPLICIT NONE
-    class(T_DYN),         intent(in)     :: dynamic
+    class(T_DYN),         intent(in)     :: dynamics
     integer,              intent(in)     :: unit
     integer,              intent(out)    :: iostat
     character(*),         intent(inout)  :: iomsg
     !___________________________________________________________________________
-    write(unit, iostat=iostat, iomsg=iomsg) dynamic%data
-    write(unit, iostat=iostat, iomsg=iomsg) dynamic%work
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%data
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%work
     !___________________________________________________________________________
-    write(unit, iostat=iostat, iomsg=iomsg) dynamic%visc_opt
-    write(unit, iostat=iostat, iomsg=iomsg) dynamic%gamma0_visc
-    write(unit, iostat=iostat, iomsg=iomsg) dynamic%gamma1_visc
-    write(unit, iostat=iostat, iomsg=iomsg) dynamic%gamma2_visc
-    write(unit, iostat=iostat, iomsg=iomsg) dynamic%div_c_visc
-    write(unit, iostat=iostat, iomsg=iomsg) dynamic%leith_c_visc
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%visc_opt
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%gamma0_visc
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%gamma1_visc
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%gamma2_visc
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%div_c_visc
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%leith_c_visc
     !___________________________________________________________________________
-    write(unit, iostat=iostat, iomsg=iomsg) dynamic%i_vert_visc
-    write(unit, iostat=iostat, iomsg=iomsg) dynamic%mom_adv
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%do_ivertvisc
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%momadv_opt
+    !___________________________________________________________________________
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%do_freeslip
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%do_wsplit
+    write(unit, iostat=iostat, iomsg=iomsg) dynamics%wsplit_maxcfl
 end subroutine WRITE_T_DYN
 
-subroutine READ_T_DYN(dynamic, unit, iostat, iomsg)
+subroutine READ_T_DYN(dynamics, unit, iostat, iomsg)
     IMPLICIT NONE
-    class(T_DYN),         intent(in)     :: dynamic
+    class(T_DYN),         intent(inout)  :: dynamics
     integer,              intent(in)     :: unit
     integer,              intent(out)    :: iostat
     character(*),         intent(inout)  :: iomsg
     !___________________________________________________________________________
-    read(unit, iostat=iostat, iomsg=iomsg) dynamic%data
-    read(unit, iostat=iostat, iomsg=iomsg) dynamic%work
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%data
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%work
     !___________________________________________________________________________
-    read(unit, iostat=iostat, iomsg=iomsg) dynamic%visc_opt
-    read(unit, iostat=iostat, iomsg=iomsg) dynamic%gamma0_visc
-    read(unit, iostat=iostat, iomsg=iomsg) dynamic%gamma1_visc
-    read(unit, iostat=iostat, iomsg=iomsg) dynamic%gamma2_visc
-    read(unit, iostat=iostat, iomsg=iomsg) dynamic%div_c_visc
-    read(unit, iostat=iostat, iomsg=iomsg) dynamic%leith_c_visc
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%visc_opt
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%gamma0_visc
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%gamma1_visc
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%gamma2_visc
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%div_c_visc
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%leith_c_visc
     !___________________________________________________________________________
-    read(unit, iostat=iostat, iomsg=iomsg) dynamic%i_vert_visc
-    read(unit, iostat=iostat, iomsg=iomsg) dynamic%mom_adv
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%do_ivertvisc
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%momadv_opt
+    !___________________________________________________________________________
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%do_freeslip
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%do_wsplit
+    read(unit, iostat=iostat, iomsg=iomsg) dynamics%wsplit_maxcfl
 end subroutine READ_T_DYN
 
 END MODULE MOD_DYN
