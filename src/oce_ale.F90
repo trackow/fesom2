@@ -2800,7 +2800,7 @@ subroutine oce_timestep_ale(n, dynamics, tracers, partit, mesh)
     ! N^2 and vertical horizontal velocity shear dui/dz
     else if(mix_scheme_nmb==4 .or. mix_scheme_nmb==47) then
         if (flag_debug .and. mype==0)  print *, achar(27)//'[36m'//'     --> call calc_cvmix_pp'//achar(27)//'[0m'
-        call calc_cvmix_pp(partit, mesh)
+        call calc_cvmix_pp(dynamics, partit, mesh)
         call mo_convect(partit, mesh)
         
     ! use CVMIX TKE (turbulent kinetic energy closure) parameterisation for 
