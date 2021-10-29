@@ -142,7 +142,7 @@ integer mpi_version_len
         if (mype==0) write(*,*) 'EVP scheme option=', whichEVP
     endif
     if (mype==0) t5=MPI_Wtime()
-    call compute_diagnostics(0, tracers, partit, mesh) ! allocate arrays for diagnostic
+    call compute_diagnostics(0, dynamics, tracers, partit, mesh) ! allocate arrays for diagnostic
 #if defined (__oasis)
     call cpl_oasis3mct_define_unstr(partit, mesh)
     if(mype==0)  write(*,*) 'FESOM ---->     cpl_oasis3mct_define_unstr nsend, nrecv:',nsend, nrecv
@@ -307,7 +307,7 @@ integer mpi_version_len
         t3 = MPI_Wtime()
         !___compute energy diagnostics..._______________________________________
         if (flag_debug .and. mype==0)  print *, achar(27)//'[34m'//' --> call compute_diagnostics(1)'//achar(27)//'[0m'
-        call compute_diagnostics(1, tracers, partit, mesh)
+        call compute_diagnostics(1, dynamics, tracers, partit, mesh)
 
         t4 = MPI_Wtime()
         !___prepare output______________________________________________________

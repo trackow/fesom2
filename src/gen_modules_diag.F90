@@ -4,6 +4,7 @@ module diagnostics
   use mod_mesh
   USE MOD_PARTIT
   USE MOD_PARSUP
+  USE MOD_DYN
   use mod_tracer
   use g_clock
   use g_comm_auto
@@ -149,19 +150,21 @@ subroutine diag_curl_stress_surf(mode, partit, mesh)
 end subroutine diag_curl_stress_surf
 ! ==============================================================
 !3D curl(velocity)
-subroutine diag_curl_vel3(mode, partit, mesh)
+subroutine diag_curl_vel3(mode, dynamics, partit, mesh)
     implicit none
-    type(t_mesh),   intent(in),    target :: mesh
+    type(t_mesh)  , intent(in)   , target :: mesh
     type(t_partit), intent(inout), target :: partit
+    type(t_dyn)   , intent(in)   , target :: dynamics
     integer,        intent(in)            :: mode
     logical,        save                  :: firstcall=.true.
     integer                               :: enodes(2), el(2), ed, n, nz, nl1, nl2, nl12, nu1, nu2, nu12
     real(kind=WP)                         :: deltaX1, deltaY1, deltaX2, deltaY2, c1
-
+    real(kind=WP), dimension(:,:,:), pointer :: UV
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
 #include "associate_part_ass.h"
 #include "associate_mesh_ass.h"
+    UV => dynamics%data%uv(:,:,:)
 
     !=====================
     if (firstcall) then  !allocate the stuff at the first call
@@ -229,21 +232,25 @@ subroutine diag_curl_vel3(mode, partit, mesh)
 end subroutine diag_curl_vel3
 ! ==============================================================
 !energy budget
-subroutine diag_energy(mode, partit, mesh)
+subroutine diag_energy(mode, dynamics, partit, mesh)
   implicit none
-  type(t_mesh),   intent(in),    target :: mesh
+  type(t_mesh)  , intent(in)   , target :: mesh
   type(t_partit), intent(inout), target :: partit
+  type(t_dyn)   , intent(in)   , target :: dynamics
   integer,        intent(in)            :: mode
   logical,        save       :: firstcall=.true.
   integer                    :: n, nz, k, i, elem, nzmax, nzmin, elnodes(3)
   integer                    :: iup, ilo
   real(kind=WP)              :: ux, vx, uy, vy, tvol, rval(2)
   real(kind=WP)              :: geo_grad_x(3), geo_grad_y(3), geo_u(3), geo_v(3)
-
+  real(kind=WP), dimension(:,:,:), pointer :: UV, UVnode
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
 #include "associate_part_ass.h"
 #include "associate_mesh_ass.h"
+  UV     => dynamics%data%uv(    :,:,:)
+  UVnode => dynamics%work%uvnode(    :,:,:)
+  
 !=====================
   if (firstcall) then  !allocate the stuff at the first call
      allocate(wrhof(nl, myDim_nod2D), rhof(nl, myDim_nod2D))
@@ -283,9 +290,9 @@ subroutine diag_energy(mode, partit, mesh)
      if (mode==0) return
   end if
   
-  u_x_u=Unode(1,1:nl-1,1:myDim_nod2D)*Unode(1,1:nl-1,1:myDim_nod2D)
-  u_x_v=Unode(1,1:nl-1,1:myDim_nod2D)*Unode(2,1:nl-1,1:myDim_nod2D)
-  v_x_v=Unode(2,1:nl-1,1:myDim_nod2D)*Unode(2,1:nl-1,1:myDim_nod2D)
+  u_x_u=UVnode(1,1:nl-1,1:myDim_nod2D)*UVnode(1,1:nl-1,1:myDim_nod2D)
+  u_x_v=UVnode(1,1:nl-1,1:myDim_nod2D)*UVnode(2,1:nl-1,1:myDim_nod2D)
+  v_x_v=UVnode(2,1:nl-1,1:myDim_nod2D)*UVnode(2,1:nl-1,1:myDim_nod2D)
   ! this loop might be very expensive
   DO n=1, myDim_elem2D
      nzmax = nlevels(n)
@@ -388,10 +395,10 @@ subroutine diag_energy(mode, partit, mesh)
            if (nlevels(elem)-1 < nz) cycle
            elnodes=elem2D_nodes(:, elem)
            tvol=tvol+elem_area(elem)
-           ux=ux+sum(gradient_sca(1:3,elem)*Unode(1,nz,elnodes))*elem_area(elem)         !accumulate tensor of velocity derivatives
-           vx=vx+sum(gradient_sca(1:3,elem)*Unode(2,nz,elnodes))*elem_area(elem)
-           uy=uy+sum(gradient_sca(4:6,elem)*Unode(1,nz,elnodes))*elem_area(elem)
-           vy=vy+sum(gradient_sca(4:6,elem)*Unode(2,nz,elnodes))*elem_area(elem)
+           ux=ux+sum(gradient_sca(1:3,elem)*UVnode(1,nz,elnodes))*elem_area(elem)         !accumulate tensor of velocity derivatives
+           vx=vx+sum(gradient_sca(1:3,elem)*UVnode(2,nz,elnodes))*elem_area(elem)
+           uy=uy+sum(gradient_sca(4:6,elem)*UVnode(1,nz,elnodes))*elem_area(elem)
+           vy=vy+sum(gradient_sca(4:6,elem)*UVnode(2,nz,elnodes))*elem_area(elem)
         END DO
         dudx(nz,n)=ux/tvol!/area(nz, n)/3.
         dvdx(nz,n)=vx/tvol
@@ -401,12 +408,13 @@ subroutine diag_energy(mode, partit, mesh)
   END DO
 end subroutine diag_energy
 ! ==============================================================
-subroutine diag_densMOC(mode, tracers, partit, mesh)
+subroutine diag_densMOC(mode, dynamics, tracers, partit, mesh)
   implicit none
   integer, intent(in)                     :: mode
-  type(t_mesh),   intent(in),     target  :: mesh
-  type(t_partit), intent(inout),  target  :: partit
-  type(t_tracer), intent(in),     target  :: tracers
+  type(t_mesh)  , intent(in)   , target   :: mesh
+  type(t_partit), intent(inout), target   :: partit
+  type(t_tracer), intent(in)   , target   :: tracers
+  type(t_dyn)   , intent(in)   , target   :: dynamics
   integer                                 :: nz, snz, elem, nzmax, nzmin, elnodes(3), is, ie, pos
   integer                                 :: e, edge, enodes(2), eelems(2)
   real(kind=WP)                           :: div, deltaX, deltaY, locz
@@ -416,14 +424,16 @@ subroutine diag_densMOC(mode, tracers, partit, mesh)
   real(kind=WP), save, allocatable        :: dens(:), aux(:), el_depth(:)
   real(kind=WP), save, allocatable        :: std_dens_w(:,:), std_dens_VOL1(:,:), std_dens_VOL2(:,:)
   logical, save                           :: firstcall_s=.true., firstcall_e=.true.
-  real(kind=WP), dimension(:,:), pointer  :: temp, salt
+  real(kind=WP), dimension(:,:)  , pointer:: temp, salt
+  real(kind=WP), dimension(:,:,:), pointer:: UV
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
 #include "associate_part_ass.h"
 #include "associate_mesh_ass.h"
 
-  temp=>tracers%data(1)%values(:,:)
-  salt=>tracers%data(2)%values(:,:)
+  temp=> tracers%data(1)%values(:,:)
+  salt=> tracers%data(2)%values(:,:)
+  UV  => dynamics%data%uv(:,:,:)
 
   if (firstcall_s) then !allocate the stuff at the first call
      allocate(std_dens_UVDZ(2,std_dens_N, myDim_elem2D))
@@ -657,20 +667,21 @@ subroutine diag_densMOC(mode, tracers, partit, mesh)
 end subroutine diag_densMOC
 ! ==============================================================
 
-subroutine compute_diagnostics(mode, tracers, partit, mesh)
+subroutine compute_diagnostics(mode, dynamics, tracers, partit, mesh)
   implicit none
-  type(t_mesh),   intent(in),    target :: mesh
+  type(t_mesh)  , intent(in)   , target :: mesh
   type(t_partit), intent(inout), target :: partit
-  type(t_tracer), intent(in),    target :: tracers
+  type(t_tracer), intent(in)   , target :: tracers
+  type(t_dyn)   , intent(in)   , target :: dynamics
   integer, intent(in)                   :: mode !constructor mode (0=only allocation; any other=do diagnostic)
   real(kind=WP)                         :: val  !1. solver diagnostic
   if (ldiag_solver)      call diag_solver(mode, partit, mesh)
   !2. compute curl(stress_surf)
   if (lcurt_stress_surf) call diag_curl_stress_surf(mode, partit, mesh)
   !3. compute curl(velocity)
-  if (ldiag_curl_vel3)   call diag_curl_vel3(mode, partit, mesh)
+  if (ldiag_curl_vel3)   call diag_curl_vel3(mode, dynamics, partit, mesh)
   !4. compute energy budget
-  if (ldiag_energy)      call diag_energy(mode, partit, mesh)
+  if (ldiag_energy)      call diag_energy(mode, dynamics, partit, mesh)
   !5. print integrated temperature 
   if (ldiag_salt3d) then
      if (mod(mstep,logfile_outfreq)==0) then
@@ -681,7 +692,7 @@ subroutine compute_diagnostics(mode, tracers, partit, mesh)
      end if
   end if
   !6. MOC in density coordinate
-  if (ldiag_dMOC)        call diag_densMOC(mode, tracers, partit, mesh)
+  if (ldiag_dMOC)        call diag_densMOC(mode, dynamics, tracers, partit, mesh)
 
 end subroutine compute_diagnostics
 
