@@ -59,6 +59,7 @@ real(kind=real32) :: runtime_alltimesteps
 type(t_mesh),       target, save :: mesh
 type(t_tracer),     target, save :: tracers
 type(t_partit),     target, save :: partit
+type(t_dyn),        target, save :: dynamics
 
 
 character(LEN=256)               :: dump_dir, dump_filename
@@ -122,6 +123,7 @@ integer mpi_version_len
     if (mype==0) t2=MPI_Wtime()
 
     call tracer_init(tracers, partit, mesh)                ! allocate array of ocean tracers (derived type "t_tracer")
+    call dynamics_init(tracers, partit, mesh)                ! allocate array of ocean velocities (derived type "t_dyn")
     call arrays_init(tracers%num_tracers, partit, mesh)    ! allocate other arrays (to be refactured same as tracers in the future)
     call ocean_setup(tracers, partit, mesh)
 
@@ -291,7 +293,7 @@ integer mpi_version_len
             if (ice_update) call ice_timestep(n, partit, mesh)  
             !___compute fluxes to the ocean: heat, freshwater, momentum_________
             if (flag_debug .and. mype==0)  print *, achar(27)//'[34m'//' --> call oce_fluxes_mom...'//achar(27)//'[0m'
-            call oce_fluxes_mom(partit, mesh) ! momentum only
+            call oce_fluxes_mom(partit, mesh, dynamics) ! momentum only
             call oce_fluxes(tracers, partit, mesh)
         end if
         call before_oce_step(tracers, partit, mesh) ! prepare the things if required

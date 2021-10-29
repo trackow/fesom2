@@ -29,7 +29,7 @@ end module
 !
 !
 !_______________________________________________________________________________
-subroutine oce_fluxes_mom(partit, mesh)
+subroutine oce_fluxes_mom(partit, mesh, dynamics)
     ! transmits the relevant fields from the ice to the ocean model
     !
     use o_PARAM
@@ -37,6 +37,7 @@ subroutine oce_fluxes_mom(partit, mesh)
     use MOD_MESH
     USE MOD_PARTIT
     USE MOD_PARSUP
+    USE MOD_DYN
     use i_ARRAYS
     use i_PARAM
     USE g_CONFIG
@@ -51,7 +52,8 @@ subroutine oce_fluxes_mom(partit, mesh)
     integer                  :: n, elem, elnodes(3),n1
     real(kind=WP)            :: aux, aux1
     type(t_partit), intent(inout), target :: partit
-    type(t_mesh),   intent(in),    target :: mesh
+    type(t_mesh)  , intent(in)   , target :: mesh
+    type(t_dyn)   , intent(in)   , target :: dynamics
 
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
@@ -105,7 +107,7 @@ subroutine oce_fluxes_mom(partit, mesh)
     END DO
     
     !___________________________________________________________________________
-    if (use_cavity) call cavity_momentum_fluxes(partit, mesh)
+    if (use_cavity) call cavity_momentum_fluxes(partit, mesh, dynamics)
   
 end subroutine oce_fluxes_mom
 !
