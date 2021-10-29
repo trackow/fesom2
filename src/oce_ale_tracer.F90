@@ -14,16 +14,19 @@ module diff_part_hor_redi_interface
 end module
 module adv_tracers_ale_interface
   interface
-    subroutine adv_tracers_ale(dt, tr_num, tracer, partit, mesh) 
+    subroutine adv_tracers_ale(dt, tr_num, dynamics, tracer, partit, mesh) 
       use mod_mesh
       USE MOD_PARTIT
       USE MOD_PARSUP
       use mod_tracer
+      use MOD_DYN
       real(kind=WP),  intent(in),    target :: dt
       integer,        intent(in),    target :: tr_num
+      type(t_dyn)   , intent(inout), target :: dynamics
       type(t_tracer), intent(inout), target :: tracer
-      type(t_mesh),   intent(in),    target :: mesh
       type(t_partit), intent(inout), target :: partit
+      type(t_mesh)  , intent(in)   , target :: mesh
+      
     end subroutine
   end interface
 end module
@@ -98,28 +101,32 @@ module bc_surface_interface
 end module
 module diff_part_bh_interface
   interface
-    subroutine diff_part_bh(tr_num, tracer, partit, mesh) 
+    subroutine diff_part_bh(tr_num, dynamics, tracer, partit, mesh) 
       use mod_mesh
       USE MOD_PARTIT
       USE MOD_PARSUP
       use mod_tracer
+      use MOD_DYN
       integer,        intent(in),    target :: tr_num
+      type(t_dyn)   , intent(inout), target :: dynamics
       type(t_tracer), intent(inout), target :: tracer
-      type(t_mesh),   intent(in),    target :: mesh
+      type(t_mesh)  , intent(in)   , target :: mesh
       type(t_partit), intent(inout), target :: partit
     end subroutine
   end interface
 end module
 module solve_tracers_ale_interface
   interface
-    subroutine solve_tracers_ale(tracers, partit, mesh) 
+    subroutine solve_tracers_ale(dynamics, tracers, partit, mesh) 
       use mod_mesh
       USE MOD_PARTIT
       USE MOD_PARSUP
       use mod_tracer      
+      use MOD_DYN      
+      type(t_dyn)   , intent(inout), target :: dynamics
       type(t_tracer), intent(inout), target :: tracers
-      type(t_mesh),   intent(in),    target :: mesh
       type(t_partit), intent(inout), target :: partit
+      type(t_mesh)  , intent(in)   , target :: mesh
     end subroutine
   end interface
 end module
@@ -127,14 +134,15 @@ end module
 !
 !===============================================================================
 ! Driving routine    Here with ALE changes!!!
-subroutine solve_tracers_ale(tracers, partit, mesh) 
+subroutine solve_tracers_ale(dynamics, tracers, partit, mesh) 
     use g_config
     use o_PARAM, only: SPP, Fer_GM
-    use o_arrays
+    use o_arrays, only: fer_UV, fer_Wvel
     use mod_mesh
     USE MOD_PARTIT
     USE MOD_PARSUP
     use mod_tracer
+    use MOD_DYN
     use g_comm_auto
     use o_tracers
     use Toy_Channel_Soufflet
@@ -142,15 +150,21 @@ subroutine solve_tracers_ale(tracers, partit, mesh)
     use diff_tracers_ale_interface
     
     implicit none
-    type(t_tracer), intent(inout), target :: tracers
-    type(t_mesh),   intent(in),    target :: mesh
+    type(t_mesh)  , intent(in)   , target :: mesh
     type(t_partit), intent(inout), target :: partit
+    type(t_tracer), intent(inout), target :: tracers
+    type(t_dyn)   , intent(inout), target :: dynamics
     integer                               :: tr_num, node, nzmax, nzmin
-
+    real(kind=WP), dimension(:,:,:), pointer :: UV
+    real(kind=WP), dimension(:,:)  , pointer :: Wvel, Wvel_e
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
 #include "associate_part_ass.h"
 #include "associate_mesh_ass.h" 
+    UV     => dynamics%data%uv( :,:,:)
+    Wvel   => dynamics%data%w(  :,:)
+    Wvel_e => dynamics%data%w_e(:,:)
+    
     !___________________________________________________________________________
     if (SPP) call cal_rejected_salt(partit, mesh)
     if (SPP) call app_rejected_salt(tracers%data(2)%values, partit, mesh) 
@@ -172,7 +186,7 @@ subroutine solve_tracers_ale(tracers, partit, mesh)
         call init_tracers_AB(tr_num, tracers, partit, mesh) 
         ! advect tracers
         if (flag_debug .and. mype==0)  print *, achar(27)//'[37m'//'         --> call adv_tracers_ale'//achar(27)//'[0m'
-        call adv_tracers_ale(dt, tr_num, tracers, partit, mesh) 
+        call adv_tracers_ale(dt, tr_num, dynamics, tracers, partit, mesh) 
         ! diffuse tracers 
         if (flag_debug .and. mype==0)  print *, achar(27)//'[37m'//'         --> call diff_tracers_ale'//achar(27)//'[0m'
         call diff_tracers_ale(tr_num, tracers, partit, mesh) 
@@ -218,12 +232,13 @@ end subroutine solve_tracers_ale
 !
 !
 !===============================================================================
-subroutine adv_tracers_ale(dt, tr_num, tracers, partit, mesh) 
+subroutine adv_tracers_ale(dt, tr_num, dynamics, tracers, partit, mesh) 
     use g_config, only: flag_debug
     use mod_mesh
     USE MOD_PARTIT
     USE MOD_PARSUP
     use mod_tracer
+    use MOD_DYN
     use o_arrays
     use diagnostics, only: ldiag_DVD, compute_diag_dvd_2ndmoment_klingbeil_etal_2014, & 
                            compute_diag_dvd_2ndmoment_burchard_etal_2008, compute_diag_dvd
@@ -234,9 +249,11 @@ subroutine adv_tracers_ale(dt, tr_num, tracers, partit, mesh)
     real(kind=WP),  intent(in),    target :: dt
     integer                               :: node, nz
     integer,        intent(in)            :: tr_num
-    type(t_mesh),   intent(in),    target :: mesh
+    type(t_mesh)  , intent(in)   , target :: mesh
     type(t_partit), intent(inout), target :: partit
     type(t_tracer), intent(inout), target :: tracers
+    type(t_dyn)   , intent(inout), target :: dynamics
+    
     ! del_ttf ... initialised and setted to zero in call init_tracers_AB(tr_num)
     ! --> del_ttf ... equivalent to R_T^n in Danilov etal FESOM2: "from finite element
     !     to finite volume". At the end R_T^n should contain all advection therms and 
@@ -256,7 +273,7 @@ subroutine adv_tracers_ale(dt, tr_num, tracers, partit, mesh)
     ! here --> add horizontal advection part to del_ttf(nz,n) = del_ttf(nz,n) + ...
     tracers%work%del_ttf_advhoriz = 0.0_WP
     tracers%work%del_ttf_advvert  = 0.0_WP
-    call do_oce_adv_tra(dt, UV, wvel, wvel_i, wvel_e, tr_num, tracers, partit, mesh)    
+    call do_oce_adv_tra(dt, tr_num, dynamics, tracers, partit, mesh)    
     !___________________________________________________________________________
     ! update array for total tracer flux del_ttf with the fluxes from horizontal
     ! and vertical advection
@@ -273,11 +290,12 @@ end subroutine adv_tracers_ale
 !
 !
 !===============================================================================
-subroutine diff_tracers_ale(tr_num, tracers, partit, mesh) 
+subroutine diff_tracers_ale(tr_num, dynamics, tracers, partit, mesh) 
     use mod_mesh
     USE MOD_PARTIT
     USE MOD_PARSUP
     use mod_tracer
+    use MOD_DYN
     use o_arrays
     use o_tracers
     use diff_part_hor_redi_interface
@@ -289,8 +307,9 @@ subroutine diff_tracers_ale(tr_num, tracers, partit, mesh)
     
     integer                               :: n, nzmax, nzmin
     integer,        intent(in),    target :: tr_num
+    type(t_dyn)   , intent(inout), target :: dynamics
     type(t_tracer), intent(inout), target :: tracers
-    type(t_mesh),   intent(in),    target :: mesh
+    type(t_mesh)  , intent(in)   , target :: mesh
     type(t_partit), intent(inout), target :: partit
     real(kind=WP), pointer                :: del_ttf(:,:)
 
@@ -350,7 +369,7 @@ subroutine diff_tracers_ale(tr_num, tracers, partit, mesh)
     !init_tracers will set it to zero for the next timestep
     !init_tracers will set it to zero for the next timestep
     if (tracers%smooth_bh_tra) then
-       call diff_part_bh(tr_num, tracers, partit, mesh)  ! alpply biharmonic diffusion (implemented as filter)                                                
+       call diff_part_bh(tr_num, dynamics, tracers, partit, mesh)  ! alpply biharmonic diffusion (implemented as filter)                                                
     end if
 end subroutine diff_tracers_ale
 !
@@ -437,13 +456,14 @@ end subroutine diff_ver_part_expl_ale
 !
 !===============================================================================
 ! vertical diffusivity augmented with Redi contribution [vertical flux of K(3,3)*d_zT]
-subroutine diff_ver_part_impl_ale(tr_num, tracers, partit, mesh) 
+subroutine diff_ver_part_impl_ale(tr_num, dynamics, tracers, partit, mesh) 
     use MOD_MESH
     USE MOD_PARTIT
     USE MOD_PARSUP
     use MOD_TRACER
+    use MOD_DYN
     use o_PARAM
-    use o_ARRAYS
+    use o_ARRAYS, only: slope_tapered, Kv, Ki, heat_flux, water_flux
     use i_ARRAYS
     USE MOD_PARTIT
     USE MOD_PARSUP
@@ -454,10 +474,11 @@ subroutine diff_ver_part_impl_ale(tr_num, tracers, partit, mesh)
     use bc_surface_interface
         
     implicit none
-    integer,        intent(in),    target :: tr_num
+    integer,        intent(in)   , target :: tr_num
     type(t_tracer), intent(inout), target :: tracers
-    type(t_mesh),   intent(in),    target :: mesh
+    type(t_mesh)  , intent(in)   , target :: mesh
     type(t_partit), intent(inout), target :: partit
+    type(t_dyn)   , intent(inout), target :: dynamics
     real(kind=WP)            :: a(mesh%nl), b(mesh%nl), c(mesh%nl), tr(mesh%nl)
     real(kind=WP)            :: cp(mesh%nl), tp(mesh%nl)
     integer                  :: nz, n, nzmax,nzmin
@@ -468,14 +489,17 @@ subroutine diff_ver_part_impl_ale(tr_num, tracers, partit, mesh)
     logical                  :: do_wimpl=.true.
 
     real(kind=WP), dimension(:,:), pointer :: trarr
+    real(kind=WP), dimension(:,:), pointer :: Wvel_i
 
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
 #include "associate_part_ass.h"
 #include "associate_mesh_ass.h" 
-    trarr=>tracers%data(tr_num)%values(:,:)
+    trarr  => tracers%data(tr_num)%values(:,:)
+    Wvel_i => dynamics%data%w_i(:,:)
+    
     !___________________________________________________________________________
-    if ((trim(tracers%data(tr_num)%tra_adv_lim)=='FCT') .OR. (.not. w_split)) do_wimpl=.false.
+    if ((trim(tracers%data(tr_num)%tra_adv_lim)=='FCT') .OR. (.not. dynamics%use_wsplit)) do_wimpl=.false.
     
     if (Redi) isredi=1._WP
     dt_inv=1.0_WP/dt
@@ -1146,30 +1170,34 @@ end subroutine diff_part_hor_redi
 !
 !
 !===============================================================================
-SUBROUTINE diff_part_bh(tr_num, tracers, partit, mesh) 
-    use o_ARRAYS
+SUBROUTINE diff_part_bh(tr_num, dynamics, tracers, partit, mesh) 
     use MOD_MESH
     USE MOD_PARTIT
     USE MOD_PARSUP
     use MOD_TRACER
+    use MOD_DYN
     use o_param
     use g_config
     use g_comm_auto
 
     IMPLICIT NONE
     integer,        intent(in),    target   :: tr_num
+    type(t_dyn)   , intent(inout), target   :: dynamics
     type(t_tracer), intent(inout), target   :: tracers
-    type(t_mesh),   intent(in),    target   :: mesh
+    type(t_mesh)  , intent(in)   , target   :: mesh
     type(t_partit), intent(inout), target   :: partit
+    
     real(kind=WP)                           :: u1, v1, len, vi, tt, ww 
     integer                                 :: nz, ed, el(2), en(2), k, elem, nl1, ul1
     real(kind=WP), allocatable              :: temporary_ttf(:,:)
     real(kind=WP), pointer                  :: ttf(:,:)
+    real(kind=WP), dimension(:,:,:), pointer :: UV
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
 #include "associate_part_ass.h"
 #include "associate_mesh_ass.h" 
     ttf => tracers%data(tr_num)%values
+    UV  => dynamics%data%uv
 
     ed=myDim_nod2D+eDim_nod2D
     allocate(temporary_ttf(nl-1, ed))

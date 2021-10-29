@@ -2950,7 +2950,7 @@ subroutine oce_timestep_ale(n, dynamics, tracers, partit, mesh)
     !___________________________________________________________________________
     ! solve tracer equation
     if (flag_debug .and. mype==0)  print *, achar(27)//'[36m'//'     --> call solve_tracers_ale'//achar(27)//'[0m'
-    call solve_tracers_ale(tracers, partit, mesh)
+    call solve_tracers_ale(dynamics, tracers, partit, mesh)
     t8=MPI_Wtime() 
     
     !___________________________________________________________________________
