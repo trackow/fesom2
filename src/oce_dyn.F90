@@ -1138,7 +1138,7 @@ USE MOD_MESH
 USE MOD_PARTIT
 USE MOD_PARSUP
 USE MOD_DYN
-USE o_ARRAYS, only: v_back,  coriolis_node, bvfreq, &
+USE o_ARRAYS, only: v_back, coriolis_node, bvfreq, &
                     uke, uke_dif, uke_dis, uke_back, uke_rhs, uke_rhs_old, &
                     UV_dis_tend, UV_total_tend, UV_back_tend
 USE o_PARAM
