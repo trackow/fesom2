@@ -1,13 +1,15 @@
 module ocean2ice_interface
   interface
-    subroutine ocean2ice(tracers, partit, mesh)
+    subroutine ocean2ice(dynamics, tracers, partit, mesh)
       use mod_mesh
       USE MOD_PARTIT
       USE MOD_PARSUP
       use mod_tracer
+      use MOD_DYN
       type(t_partit), intent(inout), target :: partit
-      type(t_mesh),   intent(in),    target :: mesh
+      type(t_mesh)  , intent(in)   , target :: mesh
       type(t_tracer), intent(inout), target :: tracers
+      type(t_dyn)   , intent(in)   , target :: dynamics
     end subroutine
   end interface
 end module
@@ -113,15 +115,16 @@ end subroutine oce_fluxes_mom
 !
 !
 !_______________________________________________________________________________
-subroutine ocean2ice(tracers, partit, mesh)
+subroutine ocean2ice(dynamics, tracers, partit, mesh)
   
     ! transmits the relevant fields from the ocean to the ice model
 
     use o_PARAM
-    use o_ARRAYS
+!!PS     use o_ARRAYS
     use i_ARRAYS
     use MOD_MESH
     use MOD_TRACER
+    use MOD_DYN
     USE MOD_PARTIT
     USE MOD_PARSUP
     USE g_CONFIG
@@ -129,17 +132,20 @@ subroutine ocean2ice(tracers, partit, mesh)
     implicit none
 
     type(t_partit), intent(inout), target :: partit
-    type(t_mesh),   intent(in),    target :: mesh
-    type(t_tracer), intent(in),    target :: tracers
+    type(t_mesh)  , intent(in)   , target :: mesh
+    type(t_tracer), intent(in)   , target :: tracers
+    type(t_dyn)   , intent(in)   , target :: dynamics
     integer :: n, elem, k
     real(kind=WP) :: uw, vw, vol
-    real(kind=WP), dimension(:,:), pointer :: temp, salt
+    real(kind=WP), dimension(:,:)  , pointer :: temp, salt
+    real(kind=WP), dimension(:,:,:), pointer :: UV
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
 #include "associate_part_ass.h"
 #include "associate_mesh_ass.h"
-    temp=>tracers%data(1)%values(:,:)
-    salt=>tracers%data(2)%values(:,:)
+    temp => tracers%data(1)%values(:,:)
+    salt => tracers%data(2)%values(:,:)
+    UV   => dynamics%data%uv(:,:,:)
 
     ! the arrays in the ice model are renamed
         

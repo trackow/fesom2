@@ -275,7 +275,7 @@ integer mpi_version_len
         if(use_ice) then
             !___compute fluxes from ocean to ice________________________________
             if (flag_debug .and. mype==0)  print *, achar(27)//'[34m'//' --> call ocean2ice(n)'//achar(27)//'[0m'
-            call ocean2ice(tracers, partit, mesh)
+            call ocean2ice(dynamics, tracers, partit, mesh)
             
             !___compute update of atmospheric forcing____________________________
             if (flag_debug .and. mype==0)  print *, achar(27)//'[34m'//' --> call update_atm_forcing(n)'//achar(27)//'[0m'
