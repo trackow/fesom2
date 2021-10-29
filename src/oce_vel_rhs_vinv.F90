@@ -1,11 +1,13 @@
 module relative_vorticity_interface
   interface
-    subroutine relative_vorticity(partit, mesh)
+    subroutine relative_vorticity(dynamics, partit, mesh)
       use mod_mesh
       USE MOD_PARTIT
       USE MOD_PARSUP
-      type(t_mesh),   intent(in),    target :: mesh
+      USE MOD_DYN
+      type(t_mesh)  , intent(in),    target :: mesh
       type(t_partit), intent(inout), target :: partit
+      type(t_dyn)   , intent(inout), target :: dynamics
     end subroutine
   end interface
 end module
@@ -14,22 +16,25 @@ end module
 ! (curl u+f)\times u+grad(u^2/2)+w du/dz
 !
 ! ===================================================================
-subroutine relative_vorticity(partit, mesh)
-    USE o_ARRAYS
+subroutine relative_vorticity(dynamics, partit, mesh)
+    USE o_ARRAYS, only: vorticity
     USE MOD_MESH
     USE MOD_PARTIT
     USE MOD_PARSUP
+    USE MOD_DYN
     use g_comm_auto
     IMPLICIT NONE
     integer        :: n, nz, el(2), enodes(2), nl1, nl2, edge, ul1, ul2, nl12, ul12
     real(kind=WP)  :: deltaX1, deltaY1, deltaX2, deltaY2, c1
     type(t_mesh),   intent(in),    target :: mesh
     type(t_partit), intent(inout), target :: partit
+    type(t_dyn)   , intent(inout), target :: dynamics
+    real(kind=WP), dimension(:,:,:), pointer :: UV
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
 #include "associate_part_ass.h"
 #include "associate_mesh_ass.h"
-
+    UV => dynamics%data%uv(:,:,:)
     !!PS DO n=1,myDim_nod2D
     !!PS    nl1 = nlevels_nod2D(n)-1
     !!PS    ul1 = ulevels_nod2D(n)
@@ -108,12 +113,13 @@ subroutine relative_vorticity(partit, mesh)
 ! Now it the relative vorticity known on neighbors too
 end subroutine relative_vorticity
 ! ==========================================================================
-subroutine compute_vel_rhs_vinv(partit, mesh) !vector invariant
+subroutine compute_vel_rhs_vinv(dynamics, partit, mesh) !vector invariant
     USE o_PARAM
-    USE o_ARRAYS
+    USE o_ARRAYS, only: eta_n, coriolis_node, hpressure, vorticity
     USE MOD_MESH
     USE MOD_PARTIT
     USE MOD_PARSUP
+    USE MOD_DYN
     USE g_CONFIG
     use g_comm_auto
     use relative_vorticity_interface
@@ -128,10 +134,15 @@ subroutine compute_vel_rhs_vinv(partit, mesh) !vector invariant
     real(kind=WP)     :: dZ_inv(2:mesh%nl-1), dzbar_inv(mesh%nl-1), elem_area_inv
     real(kind=WP)     :: density0_inv = 1./density_0
 
+    type(t_dyn)   , intent(inout), target :: dynamics
+    real(kind=WP), dimension(:,:,:), pointer :: UV, UV_rhs, UV_rhsAB
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
 #include "associate_part_ass.h"
 #include "associate_mesh_ass.h"
+    UV       => dynamics%data%uv(:,:,:)
+    UV_rhsAB => dynamics%data%uv_rhsAB(:,:,:)
+    UV_rhs   => dynamics%work%uv_rhs(:,:,:)
 
     w = 0.0_WP
 
@@ -195,7 +206,7 @@ subroutine compute_vel_rhs_vinv(partit, mesh) !vector invariant
         END DO
     END DO 
 
-    call relative_vorticity(partit, mesh)
+    call relative_vorticity(dynamics, partit, mesh)
     ! ====================
     ! Sea level and pressure contribution   -\nabla(g\eta +hpressure/rho_0+V^2/2)
     ! and the Coriolis force (elemental part)
