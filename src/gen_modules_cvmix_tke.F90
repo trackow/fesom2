@@ -252,7 +252,7 @@ module g_cvmix_tke
     subroutine calc_cvmix_tke(dynamics, partit, mesh)
         type(t_mesh)  , intent(in)   , target :: mesh
         type(t_partit), intent(inout), target :: partit
-        type(t_dyn)   , intent(inout), target :: dynamics
+        type(t_dyn)   , intent(in)   , target :: dynamics
         integer       :: node, elem, nelem, nz, nln, nun, elnodes(3), node_size
         real(kind=WP) :: tvol
         real(kind=WP) :: dz_trr(mesh%nl), bvfreq2(mesh%nl), vshear2(mesh%nl)
