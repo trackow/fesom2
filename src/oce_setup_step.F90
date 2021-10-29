@@ -464,8 +464,8 @@ if (use_ice .and. use_momix) mixlength=0.
 ! ================
 ! Vertical velocity and pressure
 ! ================
-allocate(Wvel(nl, node_size), hpressure(nl,node_size))
-allocate(Wvel_e(nl, node_size), Wvel_i(nl, node_size))
+allocate(hpressure(nl,node_size))
+allocate(Wvel(nl, node_size), Wvel_e(nl, node_size), Wvel_i(nl, node_size))
 allocate(CFL_z(nl, node_size)) ! vertical CFL criteria
 allocate(bvfreq(nl,node_size),mixlay_dep(node_size),bv_ref(node_size))
 ! ================
