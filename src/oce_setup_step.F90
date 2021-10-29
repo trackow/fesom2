@@ -24,6 +24,21 @@ module tracer_init_interface
     end subroutine
   end interface
 end module
+
+module dynamics_init_interface
+  interface
+    subroutine dynamics_init(dynamics, partit, mesh)
+      USE MOD_MESH
+      USE MOD_PARTIT
+      USE MOD_PARSUP
+      use MOD_DYN
+      type(t_mesh)  , intent(in)   , target :: mesh
+      type(t_partit), intent(inout), target :: partit
+      type(t_dyn)   , intent(inout), target :: dynamics
+    end subroutine
+  end interface
+end module
+
 module ocean_setup_interface
   interface
     subroutine ocean_setup(tracers, partit, mesh)
@@ -310,6 +325,93 @@ if (ldiag_DVD) then
     tracers%work%tr_dvd_vert  = 0.0_WP
 end if
 END SUBROUTINE tracer_init
+!
+!
+!_______________________________________________________________________________
+SUBROUTINE dynamics_init(dynamics, partit, mesh)
+    USE MOD_MESH
+    USE MOD_PARTIT
+    USE MOD_PARSUP
+    USE MOD_DYN
+    IMPLICIT NONE
+    integer        :: elem_size, node_size
+    integer, save  :: nm_unit  = 104       ! unit to open namelist file, skip 100-102 for cray
+    integer        :: iost
+
+    integer        :: visc_opt
+    real(kind=WP)  :: gamma0_visc, gamma1_visc, gamma2_visc
+    real(kind=WP)  :: div_c_visc, leith_c_visc
+    logical        :: do_ivertvisc
+    integer        :: momadv_opt
+    logical        :: do_freeslip
+    logical        :: do_wsplit
+    real(kind=WP)  :: wsplit_maxcfl
+
+    type(t_mesh)  , intent(in)   , target :: mesh
+    type(t_partit), intent(inout), target :: partit
+    type(t_dyn)   , intent(inout), target :: dynamics
+    
+    ! define dynamics namelist parameter
+    namelist /dynamics_visc    / visc_opt, gamma0_visc, gamma1_visc, gamma2_visc, div_c_visc, leith_c_visc, do_ivertvisc
+    namelist /dynamics_general / momadv_opt, do_freeslip, do_wsplit, wsplit_maxcfl 
+
+#include "associate_part_def.h"
+#include "associate_mesh_def.h"
+#include "associate_part_ass.h"
+#include "associate_mesh_ass.h"
+
+    ! open and read namelist for I/O
+    open(unit=nm_unit, file='namelist.dyn', form='formatted', access='sequential', status='old', iostat=iost )
+    if (iost == 0) then
+        if (mype==0) write(*,*) '     file   : ', 'namelist.dyn',' open ok'
+    else
+        if (mype==0) write(*,*) 'ERROR: --> bad opening file   : ', 'namelist.dyn',' ; iostat=',iost
+        call par_ex(partit%MPI_COMM_FESOM, partit%mype)
+        stop
+    end if
+    read(nm_unit, nml=dynamics_visc   , iostat=iost)
+    read(nm_unit, nml=dynamics_general, iostat=iost)
+    close(nm_unit)
+
+    ! define local vertice & elem array size
+    elem_size=myDim_elem2D+eDim_elem2D
+    node_size=myDim_nod2D+eDim_nod2D
+
+    ! allocate data arrays in derived type
+    allocate(dynamics%data%uv(          2, nl-1, elem_size))
+    allocate(dynamics%data%uv_rhsAB(    2, nl-1, elem_size))
+    allocate(dynamics%data%w(                nl, node_size))
+    allocate(dynamics%data%w_e(              nl, node_size))
+    allocate(dynamics%data%w_i(              nl, node_size))
+    dynamics%data%uv           = 0.0_WP
+    dynamics%data%uv_rhsAB     = 0.0_WP
+    dynamics%data%w            = 0.0_WP
+    dynamics%data%w_e          = 0.0_WP
+    dynamics%data%w_i          = 0.0_WP
+    
+    ! allocate work arrays in derived type
+    allocate(dynamics%work%uv_rhs(      2, nl-1, elem_size))
+    allocate(dynamics%work%uvnode(      2, nl-1, node_size))
+    allocate(dynamics%work%uvnode_rhsAB(2, nl-1, node_size))
+    dynamics%work%uv_rhs       = 0.0_WP
+    dynamics%work%uvnode       = 0.0_WP
+    dynamics%work%uvnode_rhsAB = 0.0_WP
+    
+    ! set parameters in derived type
+    dynamics%visc_opt     = visc_opt
+    dynamics%gamma0_visc  = gamma0_visc
+    dynamics%gamma1_visc  = gamma1_visc
+    dynamics%gamma2_visc  = gamma2_visc
+    dynamics%div_c_visc   = div_c_visc
+    dynamics%leith_c_visc = leith_c_visc
+    dynamics%do_ivertvisc = do_ivertvisc
+    dynamics%momadv_opt   = momadv_opt
+    dynamics%do_freeslip  = do_freeslip
+    dynamics%do_wsplit    = do_wsplit
+    dynamics%wsplit_maxcfl= wsplit_maxcfl
+    
+END SUBROUTINE dynamics_init
+
 !
 !
 !_______________________________________________________________________________
