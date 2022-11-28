@@ -812,8 +812,7 @@ subroutine compute_extflds(mode, dynamics, tracers, partit, mesh)
     temp   => tracers%data(1)%values(:,:)
     salt   => tracers%data(2)%values(:,:)    
 
-!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(n, nz, nzmin, nzmax, zn, tup, tlo)
-!$OMP DO    
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(n, nz, nzmin, nzmax, zn, tup, tlo)
     DO n=1, myDim_nod2D
        saltzavg(n) =0.0_WP
        nzmax=nlevels_nod2D(n)
@@ -834,8 +833,7 @@ subroutine compute_extflds(mode, dynamics, tracers, partit, mesh)
     END DO
 !$OMP END PARALLEL DO 
 
-!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(n, nz, nzmin, nzmax, zint)
-!$OMP DO    
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(n, nz, nzmin, nzmax, zint)
     DO n=1, myDim_nod2D
        tempzavg(n) =0.0_WP
        saltzavg(n) =0.0_WP
