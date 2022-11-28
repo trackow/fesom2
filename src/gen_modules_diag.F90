@@ -832,7 +832,7 @@ subroutine compute_extflds(mode, dynamics, tracers, partit, mesh)
        end do
 !      if (tlo > whichtemp .AND. depth<=1.e-12) zisotherm=depth+hnode(nz, node) set the depth to the total depth if the isotherm is not found
     END DO
-!$OMP END DO 
+!$OMP END PARALLEL DO 
 
 !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(n, nz, nzmin, nzmax, zint)
 !$OMP DO    
@@ -851,7 +851,7 @@ subroutine compute_extflds(mode, dynamics, tracers, partit, mesh)
        tempzavg(n)=tempzavg(n)/zint
        saltzavg(n)=saltzavg(n)/zint
     END DO
-!$OMP END DO 
+!$OMP END PARALLEL DO 
 
   call exchange_nod(zisotherm, partit)
   call exchange_nod(tempzavg, partit)
