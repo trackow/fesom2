@@ -202,7 +202,7 @@ SUBROUTINE nemogcmcoup_update_add( mype, npes, icomm, &
    ! Local variables
 
    if(fesom%mype==0) then
-   WRITE(0,*)'nemogcmcoup_update_add should not be called when coupling to fesom. Commented ABORT. Proceeding...'
+   WRITE(0,*)'In nemogcmcoup_update_add FESOM dummy routine. Proceeding...'
    !CALL abort
    endif   
 
@@ -344,4 +344,3 @@ SUBROUTINE nemogcmcoup_end_ioserver
    CALL abort
 
 END SUBROUTINE nemogcmcoup_end_ioserver
-
