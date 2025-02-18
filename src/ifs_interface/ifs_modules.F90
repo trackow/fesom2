@@ -1799,6 +1799,7 @@ CONTAINS
 
       ! Misc variable
       CHARACTER(len=1024) :: cdfile
+      CHARACTER(len=10) :: nprocc
       INTEGER :: ncid, dimnl, dimnw, dimnst, dimnrt, dimnpr
       INTEGER :: dims1(1), dims2(2)
       INTEGER :: idda, idsa, idrm, idns, idsaa, idnr, idnrp, idnsp
@@ -1806,8 +1807,9 @@ CONTAINS
       WRITE(cdfile, '(A,I0,A,2(I8.8,A),2(I4.4,A),A)') &
          & TRIM(cdpath) // '/dist_', nproc, '/'// TRIM(cdprefix)//'_', &
          & nsrcglopoints, '_', ndstglopoints, '_', mype, '_', nproc, '.nc'
+      WRITE(nprocc, '(I10)') nproc
 
-      call execute_command_line('mkdir -p ' // cdpath)
+      call execute_command_line('mkdir -p ' // TRIM(cdpath) // '/dist_' // TRIM(ADJUSTL(nprocc)) )
       CALL nchdlerr(nf90_create(TRIM(cdfile),nf90_clobber,ncid), &
          &          __LINE__, __MYFILE__ )
 
